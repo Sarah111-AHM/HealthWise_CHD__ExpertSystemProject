@@ -6,7 +6,7 @@ Full-stack Python + Flask web application implementing a Fuzzy Logic CHD diagnos
 
 ---
 
-## 🚀 Deploy to Vercel
+## Deploy to Vercel
 
 ### 1-Click
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/healthwise-chd-python)
@@ -22,7 +22,7 @@ vercel --prod
 
 ---
 
-## 🖥️ Run Locally
+## Run Locally
 
 ```bash
 pip install -r requirements.txt
@@ -32,25 +32,25 @@ python api/index.py
 
 ---
 
-## 🧠 System Architecture
+## System Architecture
 
 ```
 healthwise-py/
 ├── api/
-│   ├── index.py          # Flask app + REST API routes
-│   └── fuzzy_engine.py   # Pure Python fuzzy logic engine
+│   ├── index.py          
+│   └── fuzzy_engine.py   
 ├── static/
-│   ├── css/main.css      # Dark medical theme
-│   └── js/app.js         # Frontend (Chart.js + Plotly)
+│   ├── css/main.css    
+│   └── js/app.js        
 ├── templates/
-│   └── index.html        # Single-page app
-├── requirements.txt      # flask, numpy
-└── vercel.json           # Vercel deployment config
+│   └── index.html       
+├── requirements.txt    
+└── vercel.json           
 ```
 
 ---
 
-## 🔬 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -78,7 +78,7 @@ healthwise-py/
 
 ---
 
-## 📊 Fuzzy System Design
+## Fuzzy System Design
 
 ### Membership Functions
 | Variable | Set | Function | Parameters |
@@ -92,7 +92,7 @@ healthwise-py/
 | HR | Moderate | Triangular | (65, 85, 105) |
 | HR | Fast | Trapezoidal | (90, 110, 200, 220) |
 
-### Rule Base (Table 2)
+### Rule Base
 | Rule | BP | Cholesterol | HR | CHD |
 |------|----|-------------|-----|-----|
 | 1 | Low | Low | Slow | Healthy |
@@ -112,7 +112,7 @@ healthwise-py/
 
 ---
 
-## 📋 Preset Patients (Assignment)
+## Preset Patients 
 
 | Patient | BP | Chol | HR | COG | Sugeno | Classification |
 |---------|-----|------|-----|-----|--------|----------------|
