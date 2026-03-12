@@ -6,31 +6,6 @@ Full-stack Python + Flask web application implementing a Fuzzy Logic CHD diagnos
 
 ---
 
-## Deploy to Vercel
-
-### 1-Click
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/healthwise-chd-python)
-
-### Manual
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod
-```
-
----
-
-## Run Locally
-
-```bash
-pip install -r requirements.txt
-python api/index.py
-# Open http://localhost:5000
-```
-
----
 
 ## System Architecture
 
@@ -47,9 +22,6 @@ healthwise-py/
 ├── requirements.txt    
 └── vercel.json           
 ```
-
----
-
 ## API Endpoints
 
 | Method | Endpoint | Description |
