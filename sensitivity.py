@@ -1,77 +1,89 @@
 """
-sensitivity.py — Sensitivity Analysis for HealthWise CHD
-Determines which factor most influences CHD output.
+Clinical Sensitivity & Impact Analysis.
+Evaluates the marginal influence of physiological and behavioral factors 
+on the final CHD risk score.
 """
 
 import numpy as np
-from fuzzy_engine import run_inference, defuzz_cog, defuzz_sugeno
+from fuzzy_engine import execute_inference, calculate_final_score, calculate_weighted_average
 
-# Base patient for sensitivity (mid-range values)
-BASE_PATIENT = {
+# Reference Patient Profile for Differential Analysis
+CLINICAL_BASELINE = {
     "bp": 130, "chol": 190, "hr": 75,
-    "age": 45, "smoking": 0.5, "diabetes": 110,
+    "age": 45, "smoking": 0.5, "glucose": 110,
 }
 
-# Factor ranges (min, max, n_points)
-FACTOR_RANGES = {
-    "bp":       (85,  210, 50),
-    "chol":     (85,  295, 50),
-    "hr":       (35,  210, 50),
-    "age":      (5,   95,  50),
-    "smoking":  (0.0, 3.8, 50),
-    "diabetes": (60,  340, 50),
+# Operational bounds for parametric sweeping (min, max, resolution)
+PARAMETER_SWEEP_CONFIG = {
+    "bp":      (85,  210, 50, "Blood Pressure (mmHg)"),
+    "chol":    (85,  295, 50, "Total Cholesterol (mg/dL)"),
+    "hr":      (35,  210, 50, "Heart Rate (bpm)"),
+    "age":     (5,   95,  50, "Patient Age (years)"),
+    "smoking": (0.0, 3.8, 50, "Smoking Intensity (packs/day)"),
+    "glucose": (60,  340, 50, "Fasting Glucose (mg/dL)"),
 }
 
-FACTOR_LABELS = {
-    "bp":       "Blood Pressure (mmHg)",
-    "chol":     "Cholesterol (mg/dL)",
-    "hr":       "Heart Rate (bpm)",
-    "age":      "Age (years)",
-    "smoking":  "Smoking (packs/day)",
-    "diabetes": "Fasting Glucose (mg/dL)",
-}
-
-
-def run_sensitivity(base: dict = None, hedge: str = "none") -> dict:
+def analyze_factor_impact(baseline=None, intensity_modifier="none"):
     """
-    Vary each factor from its range while keeping others at base values.
-    Returns dict with x, y_cog, y_sugeno, range, most_influential.
+    Performs a differential sensitivity sweep across all clinical parameters.
+    Identifies the 'Primary Risk Driver' by measuring output variance.
     """
-    if base is None:
-        base = BASE_PATIENT.copy()
+    if baseline is None:
+        baseline = CLINICAL_BASELINE.copy()
 
-    results = {}
-    ranges_cog = {}
+    impact_results = {}
+    variance_metrics = {}
 
-    for factor, (lo, hi, n) in FACTOR_RANGES.items():
-        xs = np.linspace(lo, hi, n).tolist()
-        ys_cog  = []
-        ys_sug  = []
-        for xv in xs:
-            kw = dict(base); kw[factor] = float(xv)
-            fired, *_ = run_inference(
-                kw["bp"], kw["chol"], kw["hr"], hedge,
-                kw["age"], kw["smoking"], kw["diabetes"])
-            ys_cog.append(round(defuzz_cog(fired),    3))
-            ys_sug.append(round(defuzz_sugeno(fired), 3))
-        results[factor] = {
-            "x":       xs,
-            "y_cog":   ys_cog,
-            "y_sugeno":ys_sug,
-            "label":   FACTOR_LABELS[factor],
-            "range_cog": round(max(ys_cog) - min(ys_cog), 4),
+    for factor, (min_val, max_val, steps, label) in PARAMETER_SWEEP_CONFIG.items():
+        x_axis = np.linspace(min_val, max_val, steps).tolist()
+        centroid_trace = []
+        weighted_trace = []
+
+        for val in x_axis:
+            # Create a localized test case by varying one parameter at a time
+            test_case = dict(baseline)
+            test_case[factor] = float(val)
+            
+            # Execute inference logic
+            active_rules, _ = execute_inference(
+                test_case["bp"], test_case["chol"], test_case["hr"], 
+                intensity_modifier,
+                test_case["age"], test_case["smoking"], test_case["glucose"]
+            )
+            
+            # Calculate scores using both methodologies
+            c_score = calculate_final_score(active_rules)
+            w_score = calculate_weighted_average(active_rules)
+            
+            centroid_trace.append(round(c_score, 3))
+            weighted_trace.append(round(w_score, 3))
+
+        # Quantify the sensitivity (Max Delta)
+        impact_range = round(max(centroid_trace) - min(centroid_trace), 4)
+        
+        impact_results[factor] = {
+            "coordinates": x_axis,
+            "centroid_path": centroid_trace,
+            "weighted_path": weighted_trace,
+            "display_label": label,
+            "sensitivity_index": impact_range,
         }
-        ranges_cog[factor] = results[factor]["range_cog"]
+        variance_metrics[factor] = impact_range
 
-    most_influential = max(ranges_cog, key=ranges_cog.get)
-
-    # Sorted ranking
-    ranking = sorted(ranges_cog.items(), key=lambda x: x[1], reverse=True)
+    # Determine the most influential clinical driver
+    primary_driver = max(variance_metrics, key=variance_metrics.get)
+    
+    # Generate ranked impact hierarchy
+    impact_ranking = sorted(
+        variance_metrics.items(), 
+        key=lambda x: x[1], 
+        reverse=True
+    )
 
     return {
-        "factors":         results,
-        "ranges_cog":      ranges_cog,
-        "most_influential": most_influential,
-        "ranking":         ranking,
-        "base_patient":    base,
-    }
+        "analysis_grid":     impact_results,
+        "primary_driver":    primary_driver,
+        "impact_ranking":    impact_ranking,
+        "baseline_profile":  baseline,
+            }
+    
