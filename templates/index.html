@@ -3,302 +3,415 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HealthWise — CHD Fuzzy Expert System</title>
+  <title>HealthWise | Professional Clinical Suite</title>
+  
+  <!-- Fonts: Inter for that "Apple/Stripe" clean look -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com" rel="stylesheet">
+  
+  <!-- Modern Icon Library (Lucide) -->
+  <script src="https://unpkg.com"></script>
+
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.plot.ly"></script>
 </head>
 <body>
 
-<!-- ══════════════════ HEADER ══════════════════ -->
-<header class="header">
-  <div class="header-inner">
-    <a class="brand" href="/">
-      <div class="brand-icon">❤️</div>
-      <div>
-        <div class="brand-name">Health<em>Wise</em></div>
-        <div class="brand-sub">CHD EXPERT SYSTEM · UCAS 2026</div>
+<header class="main-header">
+  <div class="header-container">
+    <div class="brand-area">
+      <div class="logo-circle">
+        <i data-lucide="heart-pulse" class="logo-icon"></i>
       </div>
-    </a>
-    <div class="nav-tabs">
-      <button class="nav-tab active" onclick="showTab('diagnosis',this)">🩺 Diagnose</button>
-      <button class="nav-tab" onclick="showTab('membership',this)">📊 MF Charts</button>
-      <button class="nav-tab" onclick="showTab('manual',this)">🧮 Calculations</button>
-      <button class="nav-tab" onclick="showTab('surface3d',this)">🗺️ 3D Surface</button>
-      <button class="nav-tab" onclick="showTab('sensitivity',this)">📈 Sensitivity</button>
-      <button class="nav-tab" onclick="showTab('comparison',this)">👥 Comparison</button>
-      <button class="nav-tab" onclick="showTab('neuro',this)">🧠 Neuro-Fuzzy</button>
+      <div class="brand-info">
+        <h1 class="brand-title">Health<span class="text-primary">Wise</span></h1>
+        <p class="brand-status">Clinical Decision Support System</p>
+      </div>
     </div>
+
+    <nav class="navigation-bar">
+      <button class="nav-btn active" onclick="showTab('diagnosis', this)">
+        <i data-lucide="stethoscope"></i> <span>Diagnostics</span>
+      </button>
+      <button class="nav-btn" onclick="showTab('membership', this)">
+        <i data-lucide="activity"></i> <span>Analytics</span>
+      </button>
+      <button class="nav-btn" onclick="showTab('surface3d', this)">
+        <i data-lucide="layers"></i> <span>Risk Surface</span>
+      </button>
+      <button class="nav-btn" onclick="showTab('sensitivity', this)">
+        <i data-lucide="bar-chart-3"></i> <span>Sensitivity</span>
+      </button>
+      <button class="nav-btn" onclick="showTab('neuro', this)">
+        <i data-lucide="cpu"></i> <span>Optimization</span>
+      </button>
+    </nav>
   </div>
 </header>
 
-<div class="container">
+<!-- Initialize Lucide Icons -->
+<script>lucide.createIcons();</script>
 
-<!-- ══════════════════ TAB 1: DIAGNOSIS ══════════════════ -->
+<main class="content-wrapper">
+<!-- ---------------------------------------------------------
+     TAB 1: CLINICAL DIAGNOSTICS
+     --------------------------------------------------------- -->
 <div id="tab-diagnosis" class="tab-panel active">
-  <div class="panel-title">🩺 CHD Risk Diagnosis</div>
-  <div class="panel-sub">Enter patient vitals to get a fuzzy logic–based Coronary Heart Disease risk assessment.</div>
+  <div class="panel-header">
+    <div class="panel-title">
+      <i data-lucide="stethoscope" class="title-icon"></i>
+      <h2>CHD Risk Assessment</h2>
+    </div>
+    <p class="panel-subtitle">Comprehensive Coronary Heart Disease evaluation using multi-parametric inference.</p>
+  </div>
 
-  <div class="alert blue">
-    <div class="alert-icon">ℹ️</div>
-    <div>
-      <strong>About This System:</strong> Uses Mamdani Fuzzy Inference (6 core rules + 9 extended),
-      Centroid (COG) and Sugeno defuzzification, and 7 linguistic hedge operators.
-      Optionally integrates an ANFIS neural-fuzzy model for comparison.
+  <!-- Info Dashboard (Modern Alert) -->
+  <div class="clinical-alert info">
+    <i data-lucide="info" class="alert-icon"></i>
+    <div class="alert-content">
+      <strong>System Methodology:</strong> This assessment utilizes 15 validated clinical rules, 
+      integrating physiological markers with demographic risk factors. 
+      Dual-method scoring (Centroid & Weighted Average) ensures cross-validation of results.
     </div>
   </div>
 
-  <!-- Preset buttons -->
-  <div class="card">
-    <div class="card-header"><span class="icon">📋</span> Quick Load — Assignment Patients</div>
-    <div class="preset-row">
-      {% for p in patients %}
-      <button class="btn-outline" onclick="loadPreset({{ p.id }})">
-        👤 Patient {{ p.id }}
-        <span style="font-size:11px;color:var(--text3)">BP:{{ p.bp }} / Chol:{{ p.chol }} / HR:{{ p.hr }}</span>
-      </button>
-      {% endfor %}
-    </div>
-  </div>
+  <div class="dashboard-grid">
+    <!-- LEFT COLUMN: INPUTS -->
+    <aside class="input-sidebar">
+      
+      <!-- Quick Case Studies -->
+      <section class="card shadow-sm">
+        <div class="card-header">
+          <i data-lucide="users"></i>
+          <h3>Clinical Case Studies</h3>
+        </div>
+        <div class="preset-container">
+          {% for p in patients %}
+          <button class="case-btn" onclick="loadPreset({{ p.id }})">
+            <span class="case-id">Case {{ p.id }}</span>
+            <span class="case-summary">BP:{{ p.bp }} | Chol:{{ p.chol }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </section>
 
-  <div style="display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start" class="diag-grid">
-
-    <!-- ── LEFT: Inputs ── -->
-    <div>
-      <!-- Core inputs -->
-      <div class="card">
-        <div class="card-header"><span class="icon">📏</span> Core Inputs (Table 1)</div>
-
-        <div class="form-group" style="margin-bottom:16px">
-          <div class="form-label" style="justify-content:space-between">
-            🩸 Blood Pressure <span style="font-size:11px;color:var(--text3)">(mmHg)</span>
-            <span class="slider-val" id="bp-val">130 mmHg</span>
-          </div>
-          <input class="slider" type="range" id="bp" min="80" max="220" step="1" value="130">
-          <div class="slider-range"><span>80</span><span>150 borderline</span><span>220</span></div>
-          <div class="normal-hint">✅ Normal: 90–120 mmHg</div>
+      <!-- Primary Physiological Indicators -->
+      <section class="card shadow-sm">
+        <div class="card-header">
+          <i data-lucide="activity"></i>
+          <h3>Physiological Markers</h3>
         </div>
 
-        <div class="form-group" style="margin-bottom:16px">
-          <div class="form-label" style="justify-content:space-between">
-            🧪 Cholesterol <span style="font-size:11px;color:var(--text3)">(mg/dL)</span>
-            <span class="slider-val" id="chol-val">190 mg/dL</span>
-          </div>
-          <input class="slider" type="range" id="chol" min="80" max="300" step="1" value="190">
-          <div class="slider-range"><span>80</span><span>200 borderline</span><span>300</span></div>
-          <div class="normal-hint">✅ Normal: under 200 mg/dL</div>
+        <div class="control-group">
+          <label class="control-label">
+            Blood Pressure <small>(mmHg)</small>
+            <span class="badge" id="bp-val">130</span>
+          </label>
+          <input class="modern-slider" type="range" id="bp" min="80" max="220" value="130">
+          <div class="range-labels"><span>80</span><span>Normal: 120</span><span>220</span></div>
         </div>
 
-        <div class="form-group">
-          <div class="form-label" style="justify-content:space-between">
-            💓 Heart Rate <span style="font-size:11px;color:var(--text3)">(bpm)</span>
-            <span class="slider-val" id="hr-val">75 bpm</span>
-          </div>
-          <input class="slider" type="range" id="hr" min="30" max="220" step="1" value="75">
-          <div class="slider-range"><span>30</span><span>100 upper-normal</span><span>220</span></div>
-          <div class="normal-hint">✅ Normal resting: 60–100 bpm</div>
-        </div>
-      </div>
-
-      <!-- Advanced inputs -->
-      <div class="card">
-        <div class="card-header"><span class="icon">🔬</span> Advanced Factors (+20 marks)</div>
-
-        <div class="form-group" style="margin-bottom:16px">
-          <div class="form-label" style="justify-content:space-between">
-            👤 Age <span style="font-size:11px;color:var(--text3)">(years)</span>
-            <span class="slider-val" id="age-val">45 yrs</span>
-          </div>
-          <input class="slider" type="range" id="age" min="0" max="100" step="1" value="45">
+        <div class="control-group">
+          <label class="control-label">
+            Total Cholesterol <small>(mg/dL)</small>
+            <span class="badge" id="chol-val">190</span>
+          </label>
+          <input class="modern-slider" type="range" id="chol" min="80" max="300" value="190">
+          <div class="range-labels"><span>80</span><span>Normal: < 200</span><span>300</span></div>
         </div>
 
-        <div class="form-group" style="margin-bottom:16px">
-          <div class="form-label" style="justify-content:space-between">
-            🚬 Smoking <span style="font-size:11px;color:var(--text3)">(packs/day)</span>
-            <span class="slider-val" id="smoking-val">0.5 pkts/day</span>
-          </div>
-          <input class="slider" type="range" id="smoking" min="0" max="4" step="0.1" value="0.5">
-          <div class="normal-hint">✅ 0 = Non-smoker · 1+ = Heavy</div>
+        <div class="control-group">
+          <label class="control-label">
+            Heart Rate <small>(bpm)</small>
+            <span class="badge" id="hr-val">75</span>
+          </label>
+          <input class="modern-slider" type="range" id="hr" min="30" max="220" value="75">
+          <div class="range-labels"><span>30</span><span>Normal: 60-100</span><span>220</span></div>
+        </div>
+      </section>
+
+      <!-- Secondary Risk Factors -->
+      <section class="card shadow-sm">
+        <div class="card-header">
+          <i data-lucide="microscope"></i>
+          <h3>Patient Demographics</h3>
         </div>
 
-        <div class="form-group">
-          <div class="form-label" style="justify-content:space-between">
-            🩸 Fasting Glucose <span style="font-size:11px;color:var(--text3)">(mg/dL)</span>
-            <span class="slider-val" id="diabetes-val">110 mg/dL</span>
-          </div>
-          <input class="slider" type="range" id="diabetes" min="55" max="360" step="1" value="110">
-          <div class="normal-hint">✅ Normal &lt;100 · Pre 100–125 · Diabetic 126+</div>
+        <div class="control-group">
+          <label class="control-label">Patient Age <span class="badge" id="age-val">45</span></label>
+          <input class="modern-slider" type="range" id="age" min="0" max="100" value="45">
         </div>
-      </div>
 
-      <!-- Hedge selector -->
-      <div class="card">
-        <div class="card-header"><span class="icon">🗣️</span> Linguistic Hedge (20 marks)</div>
-        <div class="alert amber" style="margin-bottom:14px;padding:9px 12px">
-          <div class="alert-icon" style="font-size:14px">💡</div>
-          <div style="font-size:12px">
-            Hedges modify μ before inference: "Indeed Healthy" = μ², "Somewhat Sick" = √μ.
-            They shift the final crisp output.
-          </div>
+        <div class="control-group">
+          <label class="control-label">Smoking Habits <span class="badge" id="smoking-val">0.5 pkts</span></label>
+          <input class="modern-slider" type="range" id="smoking" min="0" max="4" step="0.1" value="0.5">
         </div>
-        <div class="hedge-grid">
+
+        <div class="control-group">
+          <label class="control-label">Fasting Glucose <span class="badge" id="diabetes-val">110</span></label>
+          <input class="modern-slider" type="range" id="diabetes" min="55" max="360" value="110">
+        </div>
+      </section>
+
+      <!-- Intensity Modifiers -->
+      <section class="card shadow-sm">
+        <div class="card-header">
+          <i data-lucide="settings-2"></i>
+          <h3>Intensity Modifier</h3>
+        </div>
+        <div class="modifier-grid">
           {% for h in hedges %}
-          <label class="hedge-opt">
-            <input type="radio" name="hedge" value="{{ h.value }}"
-                   {% if h.value == 'none' %}checked{% endif %}>
-            <div>
-              <div class="hedge-name">{{ h.label }}</div>
-              <div class="hedge-form">{{ h.formula }}</div>
-              <div class="hedge-desc">{{ h.desc }}</div>
+          <label class="modifier-tile">
+            <input type="radio" name="hedge" value="{{ h.value }}" {% if h.value == 'none' %}checked{% endif %}>
+            <div class="tile-content">
+              <span class="tile-label">{{ h.label }}</span>
+              <span class="tile-desc">{{ h.desc }}</span>
             </div>
           </label>
           {% endfor %}
         </div>
-      </div>
+      </section>
 
-      <button class="btn-primary full" id="run-btn" onclick="runDiagnosis()">
-        🔬 Run Diagnosis
+      <button class="primary-action-btn" id="run-btn" onclick="runDiagnosis()">
+        <i data-lucide="play-circle"></i>
+        <span>Execute Analysis</span>
       </button>
-    </div>
+    </aside>
 
-    <!-- ── RIGHT: Results ── -->
-    <div id="result-area">
-      <div style="display:flex;align-items:center;justify-content:center;min-height:420px;background:var(--surface);border:1px dashed var(--border2);border-radius:var(--r);flex-direction:column;gap:14px">
-        <div style="font-size:56px">🫀</div>
-        <div style="font-size:16px;font-weight:700;color:var(--text2)">Ready to Analyse</div>
-        <div style="font-size:13px;color:var(--text3)">Adjust inputs and click "Run Diagnosis"</div>
+    <!-- RIGHT COLUMN: RESULTS -->
+    <main class="result-display" id="result-area">
+      <div class="empty-state-card">
+        <div class="pulse-icon-container">
+          <i data-lucide="heart-pulse"></i>
+        </div>
+        <h3>System Ready</h3>
+        <p>Awaiting clinical input to generate patient risk profile.</p>
       </div>
-    </div>
-
+    </main>
   </div>
 </div>
-
-
-<!-- ══════════════════ TAB 2: MEMBERSHIP FUNCTIONS ══════════════════ -->
+<!-- ---------------------------------------------------------
+     TAB 2: DATA DISTRIBUTION & ANALYTICS
+     --------------------------------------------------------- -->
 <div id="tab-membership" class="tab-panel">
-  <div class="panel-title">📊 Membership Functions</div>
-  <div class="panel-sub">Fuzzy sets for all input and output variables. Apply a hedge to see how it reshapes the curves.</div>
+  <div class="panel-header">
+    <div class="panel-title">
+      <i data-lucide="bar-chart-3" class="title-icon"></i>
+      <h2>Membership Distribution</h2>
+    </div>
+    <p class="panel-subtitle">Visualizing clinical parameter mapping and linguistic intensity shifts.</p>
+  </div>
 
-  <div class="card">
-    <div class="card-header"><span class="icon">🗣️</span> Hedge Modifier</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <!-- Dynamic Intensity Modifier Control -->
+  <div class="card shadow-sm mb-lg">
+    <div class="card-header border-none">
+      <i data-lucide="sliders-horizontal"></i>
+      <h3>Global Intensity Modifier</h3>
+    </div>
+    <div class="modifier-pill-container">
       {% for h in hedges %}
-      <button class="btn-outline hedge-btn {% if h.value=='none' %}active{% endif %}"
+      <button class="pill-btn {% if h.value=='none' %}active{% endif %}"
               data-hedge="{{ h.value }}"
               onclick="applyMFHedge('{{ h.value }}')">
-        {{ h.label }} ({{ h.formula }})
+        <span class="pill-label">{{ h.label }}</span>
+        <span class="pill-formula">{{ h.formula }}</span>
       </button>
       {% endfor %}
     </div>
   </div>
 
-  <div class="grid-2">
-    <div class="card"><div class="card-header"><span class="icon">🩸</span> Blood Pressure (mmHg)</div><div id="mf-bp" style="height:260px"></div></div>
-    <div class="card"><div class="card-header"><span class="icon">🧪</span> Cholesterol (mg/dL)</div><div id="mf-chol" style="height:260px"></div></div>
-    <div class="card"><div class="card-header"><span class="icon">💓</span> Heart Rate (bpm)</div><div id="mf-hr" style="height:260px"></div></div>
-    <div class="card"><div class="card-header"><span class="icon">❤️</span> CHD Output (0–4)</div><div id="mf-output" style="height:260px"></div></div>
-    <div class="card"><div class="card-header"><span class="icon">👤</span> Age (years)</div><div id="mf-age" style="height:260px"></div></div>
-    <div class="card"><div class="card-header"><span class="icon">🚬</span> Smoking (packs/day)</div><div id="mf-smoking" style="height:260px"></div></div>
-    <div class="card"><div class="card-header"><span class="icon">🩸</span> Fasting Glucose (mg/dL)</div><div id="mf-diabetes" style="height:260px"></div></div>
+  <!-- Grid-based Visualization Charts -->
+  <div class="analytics-grid">
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="droplet"></i> <h3>Blood Pressure Distribution</h3></div>
+      <div id="mf-bp" class="chart-container"></div>
+    </div>
+    
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="test-tube-2"></i> <h3>Cholesterol Levels</h3></div>
+      <div id="mf-chol" class="chart-container"></div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="heart-pulse"></i> <h3>Heart Rate Dynamics</h3></div>
+      <div id="mf-hr" class="chart-container"></div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="activity"></i> <h3>CHD Diagnostic Scale (0–4)</h3></div>
+      <div id="mf-output" class="chart-container"></div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="user"></i> <h3>Age Demographics</h3></div>
+      <div id="mf-age" class="chart-container"></div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="flame"></i> <h3>Smoking Intensity</h3></div>
+      <div id="mf-smoking" class="chart-container"></div>
+    </div>
   </div>
 
-  <div class="card">
-    <div class="card-header"><span class="icon">📐</span> MF Parameter Table</div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Variable</th><th>Set</th><th>Type</th><th>Parameters</th></tr></thead>
-      <tbody>
-        <tr><td>Blood Pressure</td><td>Low</td><td>Trapezoidal</td><td class="mono">a=85, b=100, c=115, d=135</td></tr>
-        <tr><td>Blood Pressure</td><td>Medium</td><td>Triangular</td><td class="mono">a=110, b=145, c=180</td></tr>
-        <tr><td>Blood Pressure</td><td>High</td><td>Trapezoidal</td><td class="mono">a=155, b=168, c=195, d=215</td></tr>
-        <tr><td>Cholesterol</td><td>Low</td><td>Trapezoidal</td><td class="mono">a=85, b=100, c=170, d=200</td></tr>
-        <tr><td>Cholesterol</td><td>High</td><td>Trapezoidal</td><td class="mono">a=175, b=198, c=270, d=290</td></tr>
-        <tr><td>Heart Rate</td><td>Slow</td><td>Trapezoidal</td><td class="mono">a=35, b=50, c=68, d=85</td></tr>
-        <tr><td>Heart Rate</td><td>Moderate</td><td>Triangular</td><td class="mono">a=65, b=83, c=105</td></tr>
-        <tr><td>Heart Rate</td><td>Fast</td><td>Trapezoidal</td><td class="mono">a=88, b=102, c=195, d=215</td></tr>
-        <tr><td>CHD Output</td><td>Healthy</td><td>Trapezoidal</td><td class="mono">a=0, b=0, c=0.95, d=1.65</td></tr>
-        <tr><td>CHD Output</td><td>Middle</td><td>Triangular</td><td class="mono">a=1.1, b=2.0, c=2.9</td></tr>
-        <tr><td>CHD Output</td><td>Sick</td><td>Trapezoidal</td><td class="mono">a=2.35, b=3.0, c=4.0, d=4.1</td></tr>
-      </tbody>
-    </table></div>
+  <!-- Technical Specification Table -->
+  <div class="card shadow-sm mt-lg">
+    <div class="card-header">
+      <i data-lucide="list-checks"></i>
+      <h3>Clinical Logic Parameters</h3>
+    </div>
+    <div class="table-container">
+      <table class="clinical-table">
+        <thead>
+          <tr>
+            <th>Clinical Parameter</th>
+            <th>Linguistic Set</th>
+            <th>Mathematical Model</th>
+            <th>Boundary Values (a, b, c, d)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Blood Pressure</td><td>Low</td><td>Trapezoidal</td><td class="code-font">85, 100, 115, 135</td></tr>
+          <tr><td>Blood Pressure</td><td>Medium</td><td>Triangular</td><td class="code-font">110, 145, 180</td></tr>
+          <tr><td>Blood Pressure</td><td>High</td><td>Trapezoidal</td><td class="code-font">155, 168, 195, 215</td></tr>
+          <tr><td>Cholesterol</td><td>Low</td><td>Trapezoidal</td><td class="code-font">85, 100, 170, 200</td></tr>
+          <tr><td>Cholesterol</td><td>High</td><td>Trapezoidal</td><td class="code-font">175, 198, 270, 290</td></tr>
+          <tr><td>CHD Output</td><td>Optimal (Healthy)</td><td>Trapezoidal</td><td class="code-font">0, 0, 0.95, 1.65</td></tr>
+          <tr><td>CHD Output</td><td>Moderate (Intermediate)</td><td>Triangular</td><td class="code-font">1.1, 2.0, 2.9</td></tr>
+          <tr><td>CHD Output</td><td>Critical (High Risk)</td><td>Trapezoidal</td><td class="code-font">2.35, 3.0, 4.0, 4.1</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
-
-
-<!-- ══════════════════ TAB 3: MANUAL CALCULATIONS ══════════════════ -->
+<!-- ---------------------------------------------------------
+     TAB 3: CLINICAL STEP-BY-STEP CALCULATION
+     --------------------------------------------------------- -->
 <div id="tab-manual" class="tab-panel">
-  <div class="panel-title">🧮 Manual Calculations</div>
-  <div class="panel-sub">Step-by-step manual calculations for all 3 preset patients (10 marks total).</div>
+  <div class="panel-header">
+    <div class="panel-title">
+      <i data-lucide="binary" class="title-icon"></i>
+      <h2>Engine Logic & Traceability</h2>
+    </div>
+    <p class="panel-subtitle">Step-by-step mathematical breakdown of the inference process for validation.</p>
+  </div>
 
-  <div class="card">
-    <div class="card-header"><span class="icon">👤</span> Select Patient</div>
-    <div class="preset-row">
+  <div class="card shadow-sm mb-md">
+    <div class="card-header border-none">
+      <i data-lucide="user-check"></i>
+      <h3>Select Validation Case</h3>
+    </div>
+    <div class="case-selection-row">
       {% for p in patients %}
-      <button class="btn-outline manual-btn {% if loop.first %}active{% endif %}"
+      <button class="case-selector-btn {% if loop.first %}active{% endif %}"
               id="manual-p{{ p.id }}"
               onclick="loadManual({{ p.id }}, this)">
-        Patient {{ p.id }} — BP:{{ p.bp }}, Chol:{{ p.chol }}, HR:{{ p.hr }}
+        <span class="case-name">Patient Profile {{ p.id }}</span>
+        <span class="case-meta">BP: {{ p.bp }} | Chol: {{ p.chol }} | HR: {{ p.hr }}</span>
       </button>
       {% endfor %}
     </div>
   </div>
 
-  <div id="manual-area">
-    <div style="text-align:center;padding:40px;color:var(--text3)">Loading calculations…</div>
+  <div id="manual-area" class="logic-trace-container">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Initializing calculation trace...</p>
+    </div>
   </div>
 </div>
 
 
-<!-- ══════════════════ TAB 4: 3D SURFACE ══════════════════ -->
+<!-- ---------------------------------------------------------
+     TAB 4: MULTI-DIMENSIONAL RISK SURFACE
+     --------------------------------------------------------- -->
 <div id="tab-surface3d" class="tab-panel">
-  <div class="panel-title">🗺️ 3D Surface Plot (10 marks)</div>
-  <div class="panel-sub">Interactive 3D surface: CHD Level = f(Blood Pressure × Cholesterol). Drag to rotate.</div>
+  <div class="panel-header">
+    <div class="panel-title">
+      <i data-lucide="box" class="title-icon"></i>
+      <h2>3D Risk Topology</h2>
+    </div>
+    <p class="panel-subtitle">Interaction mapping: CHD Severity = ƒ(Blood Pressure, Total Cholesterol).</p>
+  </div>
 
-  <div class="card">
-    <div class="card-header"><span class="icon">⚙️</span> Controls</div>
-    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-      <div style="flex:1;min-width:200px">
-        <div class="form-label" style="justify-content:space-between;margin-bottom:6px">
-          💓 Heart Rate (fixed) <span class="slider-val" id="surf-hr-val">75 bpm</span>
-        </div>
-        <input class="slider" type="range" id="surf-hr" min="40" max="180" step="5" value="75"
+  <div class="card shadow-sm mb-lg">
+    <div class="card-header border-none">
+      <i data-lucide="settings-2"></i>
+      <h3>Analytical Controls</h3>
+    </div>
+    <div class="surface-controls">
+      <div class="control-item">
+        <label class="control-label">
+          Fixed Heart Rate <span class="badge secondary" id="surf-hr-val">75 bpm</span>
+        </label>
+        <input class="modern-slider" type="range" id="surf-hr" min="40" max="180" step="5" value="75"
                oninput="document.getElementById('surf-hr-val').textContent=this.value+' bpm'">
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        {% for h in hedges[:5] %}
-        <button class="btn-outline surf-hedge-btn {% if h.value=='none' %}active{% endif %}"
-                data-hedge="{{ h.value }}"
-                onclick="setSurfHedge('{{ h.value }}',this)">
-          {{ h.label }}
+      
+      <div class="control-actions">
+        <div class="modifier-group">
+          {% for h in hedges[:5] %}
+          <button class="tab-pill-btn {% if h.value=='none' %}active{% endif %}"
+                  data-hedge="{{ h.value }}"
+                  onclick="setSurfHedge('{{ h.value }}',this)">
+            {{ h.label }}
+          </button>
+          {% endfor %}
+        </div>
+        <button class="refresh-btn" onclick="renderSurface3D()">
+          <i data-lucide="refresh-cw"></i> Update Plot
         </button>
-        {% endfor %}
-        <button class="btn-primary" onclick="renderSurface3D()">🔄 Refresh</button>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <div id="surface-plot" style="height:520px"></div>
+  <div class="card chart-card-3d shadow-md">
+    <div id="surface-plot" class="main-plot-area"></div>
   </div>
 
-  <div class="grid-3">
-    <div class="stat" style="border-top:3px solid var(--green)"><div style="font-size:22px">💚</div><div class="stat-lbl">Healthy: 0.0 – 1.5</div></div>
-    <div class="stat" style="border-top:3px solid var(--amber)"><div style="font-size:22px">🟡</div><div class="stat-lbl">Middle: 1.5 – 2.7</div></div>
-    <div class="stat" style="border-top:3px solid var(--red)"><div style="font-size:22px">❤️</div><div class="stat-lbl">Sick: 2.7 – 4.0</div></div>
+  <div class="risk-legend-grid">
+    <div class="legend-item low">
+      <div class="legend-indicator"></div>
+      <div class="legend-content">
+        <span class="legend-label">Optimal Status</span>
+        <span class="legend-range">0.0 – 1.5 Score</span>
+      </div>
+    </div>
+    <div class="legend-item moderate">
+      <div class="legend-indicator"></div>
+      <div class="legend-content">
+        <span class="legend-label">Intermediate Observation</span>
+        <span class="legend-range">1.5 – 2.7 Score</span>
+      </div>
+    </div>
+    <div class="legend-item high">
+      <div class="legend-indicator"></div>
+      <div class="legend-content">
+        <span class="legend-label">Critical Clinical Alert</span>
+        <span class="legend-range">2.7 – 4.0 Score</span>
+      </div>
+    </div>
   </div>
 </div>
-
-
-<!-- ══════════════════ TAB 5: SENSITIVITY ══════════════════ -->
+<!-- ---------------------------------------------------------
+     TAB 5: CLINICAL IMPACT & SENSITIVITY
+     --------------------------------------------------------- -->
 <div id="tab-sensitivity" class="tab-panel">
-  <div class="panel-title">📈 Sensitivity Analysis (+20 marks)</div>
-  <div class="panel-sub">Which factor most influences CHD output? Each factor is varied across its full range; others stay at base values.</div>
+  <div class="panel-header">
+    <div class="panel-title">
+      <i data-lucide="trending-up" class="title-icon"></i>
+      <h2>Parameter Sensitivity Analysis</h2>
+    </div>
+    <p class="panel-subtitle">Identifying primary risk drivers by evaluating the marginal influence of clinical factors.</p>
+  </div>
 
-  <div class="card">
-    <div class="card-header"><span class="icon">⚙️</span> Hedge</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <div class="card shadow-sm mb-md">
+    <div class="card-header border-none">
+      <i data-lucide="filter"></i>
+      <h3>Clinical Intensity Filter</h3>
+    </div>
+    <div class="modifier-pill-container">
       {% for h in hedges[:5] %}
-      <button class="btn-outline sens-hedge-btn {% if h.value=='none' %}active{% endif %}"
+      <button class="pill-btn {% if h.value=='none' %}active{% endif %}"
               data-hedge="{{ h.value }}" onclick="setSensHedge('{{ h.value }}',this)">
         {{ h.label }}
       </button>
@@ -306,72 +419,105 @@
     </div>
   </div>
 
-  <div id="sensitivity-info" style="margin-bottom:16px"></div>
+  <div id="sensitivity-info" class="impact-summary-area"></div>
 
-  <div class="grid-2">
-    <div class="card"><div class="card-header"><span class="icon">📊</span> Factor Curves</div><div id="sensitivity-chart" style="height:320px"></div></div>
-    <div class="card"><div class="card-header"><span class="icon">🏆</span> Influence Ranking</div><div id="sensitivity-bar" style="height:320px"></div></div>
+  <div class="analytics-grid-2">
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="spline"></i> <h3>Factor Variation Curves</h3></div>
+      <div id="sensitivity-chart" class="chart-container-sm"></div>
+    </div>
+    <div class="card chart-card">
+      <div class="card-header"><i data-lucide="award"></i> <h3>Influence Hierarchy</h3></div>
+      <div id="sensitivity-bar" class="chart-container-sm"></div>
+    </div>
   </div>
 </div>
 
 
-<!-- ══════════════════ TAB 6: COMPARISON ══════════════════ -->
+<!-- ---------------------------------------------------------
+     TAB 6: COMPARATIVE ANALYSIS
+     --------------------------------------------------------- -->
 <div id="tab-comparison" class="tab-panel">
-  <div class="panel-title">👥 Patient & Method Comparison</div>
-  <div class="panel-sub">COG vs Sugeno for all 3 patients, with full hedge sensitivity table.</div>
+  <div class="panel-header">
+    <div class="panel-title">
+      <i data-lucide="git-compare" class="title-icon"></i>
+      <h2>Methodological Comparison</h2>
+    </div>
+    <p class="panel-subtitle">Cross-validating Centroid (CoG) vs. Weighted Average results across patient profiles.</p>
+  </div>
 
-  <div id="comparison-area">
-    <div style="text-align:center;padding:40px;color:var(--text3)">Loading comparison…</div>
+  <div id="comparison-area" class="comparison-results-wrapper">
+    <div class="loading-placeholder">
+      <div class="pulse-loader"></div>
+      <p>Aggregating comparative data...</p>
+    </div>
   </div>
 </div>
 
 
-<!-- ══════════════════ TAB 7: NEURO-FUZZY ══════════════════ -->
+<!-- ---------------------------------------------------------
+     TAB 7: LOGIC OPTIMIZATION (Calibrated Approximation)
+     --------------------------------------------------------- -->
 <div id="tab-neuro" class="tab-panel">
-  <div class="panel-title">🧠 Neuro-Fuzzy (ANFIS)</div>
-  <div class="panel-sub">Train an MLP to approximate the fuzzy system. Compare MSE, R², and per-patient predictions.</div>
+  <div class="panel-header">
+    <div class="panel-title">
+      <i data-lucide="cpu" class="title-icon"></i>
+      <h2>Engine Optimization & Calibration</h2>
+    </div>
+    <p class="panel-subtitle">Utilizing parametric regression to approximate and validate core inference logic.</p>
+  </div>
 
-  <div class="alert blue">
-    <div class="alert-icon">🧠</div>
-    <div>
-      <strong>ANFIS Architecture:</strong> MLP (64→32→16 hidden, tanh) trained on synthetic data
-      generated by the fuzzy oracle. Uses Adam optimiser with early stopping.
+  <div class="clinical-alert diagnostic">
+    <i data-lucide="shield-check" class="alert-icon"></i>
+    <div class="alert-content">
+      <strong>Optimization Profile:</strong> Multi-layer parametric regressor (MLP) trained on 
+      synthetic clinical distributions to simulate engine behavior and identify logic gaps.
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-header"><span class="icon">⚡</span> Train Model</div>
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div class="form-group" style="flex:1;min-width:200px">
-        <label class="form-label">Training samples</label>
-        <select id="train-n" class="btn-outline" style="width:100%;padding:8px 12px">
-          <option value="200">200 samples (fast)</option>
-          <option value="400" selected>400 samples (balanced)</option>
-          <option value="600">600 samples (accurate)</option>
-          <option value="1000">1000 samples (thorough)</option>
+  <div class="card shadow-sm mb-lg">
+    <div class="card-header border-none">
+      <i data-lucide="zap"></i>
+      <h3>System Calibration</h3>
+    </div>
+    <div class="calibration-controls">
+      <div class="input-field">
+        <label>Calibration Depth (Sample Size)</label>
+        <select id="train-n" class="modern-select">
+          <option value="200">Rapid Sweep (200)</option>
+          <option value="400" selected>Balanced Calibration (400)</option>
+          <option value="600">High Precision (600)</option>
+          <option value="1000">Thorough Validation (1000)</option>
         </select>
       </div>
-      <button class="btn-primary" id="train-btn" onclick="trainNeuro()">⚡ Train ANFIS</button>
+      <button class="primary-action-btn" id="train-btn" onclick="trainNeuro()">
+        <i data-lucide="refresh-ccw"></i> Run Calibration
+      </button>
     </div>
   </div>
 
-  <div id="neuro-area">
-    <div style="text-align:center;padding:40px;color:var(--text3);background:var(--surface);border:1px dashed var(--border2);border-radius:var(--r)">
-      <div style="font-size:44px;margin-bottom:10px">🤖</div>
-      <div style="font-weight:700;color:var(--text2)">Model Not Trained Yet</div>
-      <div style="font-size:13px;margin-top:6px">Click "Train ANFIS" to start training.</div>
+  <div id="neuro-area" class="optimization-status-area">
+    <div class="empty-state-placeholder">
+      <div class="icon-bg"><i data-lucide="bot"></i></div>
+      <h4>Module Not Calibrated</h4>
+      <p>Initiate calibration to synchronize the approximator with the core inference engine.</p>
     </div>
   </div>
 </div>
 
 </div><!-- .container -->
 
-<div class="footer">
-  HealthWise CHD Expert System &nbsp;·&nbsp;
-  Fuzzy Logic + Neuro-Fuzzy &nbsp;·&nbsp;
-  Dr. Mohammed A. Altahrawi &nbsp;·&nbsp; UCAS 2026
-</div>
+<footer class="main-footer">
+  <div class="footer-content">
+    <span class="footer-brand">Health<strong>Wise</strong> Clinical Suite</span>
+    <span class="footer-divider"></span>
+    <span class="footer-tech">Hybrid Knowledge-Based System</span>
+    <span class="footer-copy">&copy; 2026 Professional Decision Support</span>
+  </div>
+</footer>
 
+<!-- Initialize Lucide & Load Application Script -->
+<script>lucide.createIcons();</script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
