@@ -1,388 +1,492 @@
 """
-fuzzy_engine.py — HealthWise CHD Fuzzy Expert System
-Dr. Mohammed A. Altahrawi · UCAS 2026
-
-Implements:
-  - Fuzzification: trapezoidal + triangular MFs for BP, Chol, HR
-  - Inference: 6-rule Mamdani system (AND = min)
-  - Defuzzification: COG (centroid) and Sugeno (weighted average)
-  - Linguistic hedges: very, extremely, somewhat, slightly, indeed, more_or_less
-  - Advanced factors: Age, Smoking, Diabetes (+9 extended rules)
-  - Sensitivity analysis helpers
+Core Inference Engine for CHD Risk Assessment.
+Handles fuzzy logic primitives and linguistic processing.
 """
 
 import math
 import numpy as np
 
-# ═══════════════════════════════════════════════════════════
-# MEMBERSHIP FUNCTION PRIMITIVES
-# ═══════════════════════════════════════════════════════════
+# ---------------------------------------------------------
+# Membership Functions (MF) - Logic Layer
+# ---------------------------------------------------------
 
-def trapmf(x: float, a: float, b: float, c: float, d: float) -> float:
-    """Trapezoidal MF: rises a→b, plateau b→c, falls c→d."""
+def trapmf(x, a, b, c, d):
+    """Calculates trapezoidal membership value."""
     if x <= a or x >= d:
         return 0.0
     if b <= x <= c:
         return 1.0
     if x < b:
-        return (x - a) / (b - a)
-    return (d - x) / (d - c)
+        return (x - a) / float(b - a)
+    return (d - x) / float(d - c)
 
 
-def trimf(x: float, a: float, b: float, c: float) -> float:
-    """Triangular MF: rises a→b, falls b→c."""
+def trimf(x, a, b, c):
+    """Calculates triangular membership value."""
     if x <= a or x >= c:
         return 0.0
-    if x < b:
-        return (x - a) / (b - a)
     if x == b:
         return 1.0
-    return (c - x) / (c - b)
+    if x < b:
+        return (x - a) / float(b - a)
+    return (c - x) / float(c - b)
 
+# ---------------------------------------------------------
 
-# ═══════════════════════════════════════════════════════════
-# INPUT MEMBERSHIP FUNCTIONS  (exactly per Table 1)
-# ═══════════════════════════════════════════════════════════
-# BP:   Low(100-130), Medium(120-170), High(160-200)
-# Chol: Low(100-200), High(180-280)
-# HR:   Slow(50-80),  Moderate(70-100), Fast(90-200)
+# ---------------------------------------------------------
+# Clinical Input Processing (Fuzzification)
+# Definitions for: Blood Pressure, Cholesterol, Heart Rate
+# ---------------------------------------------------------
 
-def bp_mf(bp: float) -> dict:
+def get_bp_levels(bp):
+    """Assess membership for Blood Pressure ranges."""
     return {
-        "low":    round(trapmf(bp, 85,  100, 115, 135), 4),
-        "medium": round(trimf(bp,  110, 145, 180),       4),
-        "high":   round(trapmf(bp, 155, 168, 195, 215),  4),
+        "low":    round(trapmf(bp, 85, 100, 115, 135), 4),
+        "medium": round(trimf(bp, 110, 145, 180), 4),
+        "high":   round(trapmf(bp, 155, 168, 195, 215), 4),
     }
 
-
-def chol_mf(chol: float) -> dict:
+def get_cholesterol_levels(chol):
+    """Assess membership for Cholesterol levels."""
     return {
-        "low":  round(trapmf(chol, 85,  100, 170, 200), 4),
+        "low":  round(trapmf(chol, 85, 100, 170, 200), 4),
         "high": round(trapmf(chol, 175, 198, 270, 290), 4),
     }
 
-
-def hr_mf(hr: float) -> dict:
+def get_hr_levels(hr):
+    """Assess membership for Heart Rate metrics."""
     return {
-        "slow":     round(trapmf(hr, 35,  50,  68,  85),  4),
-        "moderate": round(trimf(hr,  65,  83,  105),       4),
-        "fast":     round(trapmf(hr, 88,  102, 195, 215), 4),
-    }
+        "slow":     round(trapmf(hr, 35, 50, 68, 85), 4),
+        "moderate": round(trimf(hr, 65, 83, 105), 4),
+        "fast":     round(trapmf(hr, 88, 102, 195, 215), 4),
+  }
+  
 
 
 # ═══════════════════════════════════════════════════════════
-# ADVANCED FACTOR MFs  (for +20 marks)
-# ═══════════════════════════════════════════════════════════
 
-def age_mf(age: float) -> dict:
+# ---------------------------------------------------------
+# Clinical Indicators & Patient Risk Profiles
+# Handling Age, Smoking habits, and Glucose levels
+# ---------------------------------------------------------
+
+def assess_age_group(age):
+    """Categorizes patient risk based on age brackets."""
     return {
         "young":  round(trapmf(age, 0,  10, 28, 42),  4),
-        "middle": round(trimf(age,  28, 45, 63),        4),
+        "middle": round(trimf(age,  28, 45, 63),       4),
         "old":    round(trapmf(age, 55, 65, 90, 100),  4),
     }
 
-
-def smoking_mf(s: float) -> dict:
-    """s in packs/day (0-4)."""
+def assess_smoking_intensity(packs_per_day):
+    """Evaluates smoking risk based on daily pack consumption."""
     return {
-        "none":  round(trapmf(s, -0.1, 0.0, 0.05, 0.18), 4),
-        "light": round(trimf(s,   0.1, 0.4,  0.8),        4),
-        "heavy": round(trapmf(s,  0.6, 1.0,  3.6, 4.0),   4),
+        "none":  round(trapmf(packs_per_day, -0.1, 0.0, 0.05, 0.18), 4),
+        "light": round(trimf(packs_per_day,   0.1, 0.4,  0.8),        4),
+        "heavy": round(trapmf(packs_per_day,  0.6, 1.0,  3.6, 4.0),   4),
+    }
+
+def assess_diabetic_status(glucose_level):
+    """Fasting glucose analysis (mg/dL) for diabetic profiling."""
+    return {
+        "no":  round(trapmf(glucose_level, 55,  70,  95, 115), 4),
+        "pre": round(trimf(glucose_level,  100, 112, 130),       4),
+        "yes": round(trapmf(glucose_level,  118, 140, 310, 360), 4),
     }
 
 
-def diabetes_mf(g: float) -> dict:
-    """g = fasting glucose in mg/dL."""
-    return {
-        "no":  round(trapmf(g, 55,  70,  95, 115), 4),
-        "pre": round(trimf(g,  100, 112, 130),       4),
-        "yes": round(trapmf(g,  118, 140, 310, 360), 4),
-    }
+# ---------------------------------------------------------
+# Diagnostic Risk Classification (Output Scale 0-4)
+# ---------------------------------------------------------
+
+def risk_level_healthy(score):
+    """Low risk / Optimal cardiac health profile."""
+    return trapmf(score, -0.1, 0.0, 0.95, 1.65)
+
+def risk_level_intermediate(score):
+    """Moderate risk / Clinical monitoring recommended."""
+    return trimf(score, 1.1, 2.0, 2.9)
+
+def risk_level_critical(score):
+    """High risk / Significant CHD indicators present."""
+    return trapmf(score, 2.35, 3.0, 4.0, 4.1)
 
 
-# ═══════════════════════════════════════════════════════════
-# OUTPUT MFs  (CHD level 0-4)
-# ═══════════════════════════════════════════════════════════
+# ---------------------------------------------------------
+# Clinical Intensity Modifiers (Linguistic Hedges)
+# ---------------------------------------------------------
 
-def out_healthy(x: float) -> float:
-    return trapmf(x, -0.1, 0.0, 0.95, 1.65)
-
-def out_middle(x: float) -> float:
-    return trimf(x, 1.1, 2.0, 2.9)
-
-def out_sick(x: float) -> float:
-    return trapmf(x, 2.35, 3.0, 4.0, 4.1)
-
-
-# ═══════════════════════════════════════════════════════════
-# LINGUISTIC HEDGES
-# ═══════════════════════════════════════════════════════════
-
-HEDGE_OPS = {
-    "none":         lambda m: m,
-    "very":         lambda m: m ** 2.0,
-    "extremely":    lambda m: m ** 3.0,
-    "somewhat":     lambda m: m ** 0.5,
-    "slightly":     lambda m: m ** 1.25,
-    "indeed":       lambda m: m ** 2.0,        # same as very
-    "more_or_less": lambda m: m ** 0.5,        # same as somewhat
+# Intensity scaling factors for linguistic precision
+MODIFIER_MAP = {
+    "none":         1.0,
+    "very":         2.0,    # Concentration
+    "extremely":    3.0,    # High Concentration
+    "somewhat":     0.5,    # Dilation
+    "slightly":     1.25,   # Mild shift
+    "indeed":       2.0,    # Alias for 'very'
+    "more_or_less": 0.5,    # Alias for 'somewhat'
 }
 
-HEDGE_META = [
-    {"value": "none",         "label": "None",         "formula": "μ",      "desc": "No modifier"},
-    {"value": "very",         "label": "Very",         "formula": "μ²",     "desc": "Squares μ — stricter"},
-    {"value": "extremely",    "label": "Extremely",    "formula": "μ³",     "desc": "Cubes μ — very strict"},
-    {"value": "somewhat",     "label": "Somewhat",     "formula": "√μ",     "desc": "Square root — looser"},
-    {"value": "slightly",     "label": "Slightly",     "formula": "μ^1.25", "desc": "Mild concentration"},
-    {"value": "indeed",       "label": "Indeed",       "formula": "μ²",     "desc": "Same as Very"},
-    {"value": "more_or_less", "label": "More or Less", "formula": "√μ",     "desc": "Same as Somewhat"},
-]
-
-
-def apply_hedge(mu: float, hedge: str) -> float:
-    fn = HEDGE_OPS.get(hedge, HEDGE_OPS["none"])
-    return round(float(fn(float(mu))), 6)
-
-
-# ═══════════════════════════════════════════════════════════
-# RULE BASE  (Table 2 — 6 core rules)
-# ═══════════════════════════════════════════════════════════
-
-CORE_RULES = [
-    {"id": 1, "bp": "low",    "chol": "low",  "hr": "slow",     "out": "healthy"},
-    {"id": 2, "bp": "low",    "chol": "low",  "hr": "moderate", "out": "healthy"},
-    {"id": 3, "bp": "medium", "chol": "low",  "hr": "moderate", "out": "middle"},
-    {"id": 4, "bp": "medium", "chol": "high", "hr": "slow",     "out": "middle"},
-    {"id": 5, "bp": "high",   "chol": "low",  "hr": "moderate", "out": "sick"},
-    {"id": 6, "bp": "high",   "chol": "high", "hr": "fast",     "out": "sick"},
-]
-
-# Extended rules for Advanced Challenge (+20 marks)
-EXT_RULES = [
-    {"id": 7,  "age": "young",  "sm": "none",  "db": "no",  "out": "healthy"},
-    {"id": 8,  "age": "young",  "sm": "light", "db": "no",  "out": "healthy"},
-    {"id": 9,  "age": "middle", "sm": "none",  "db": "no",  "out": "healthy"},
-    {"id": 10, "age": "middle", "sm": "light", "db": "pre", "out": "middle"},
-    {"id": 11, "age": "middle", "sm": "heavy", "db": "no",  "out": "middle"},
-    {"id": 12, "age": "middle", "sm": "heavy", "db": "pre", "out": "sick"},
-    {"id": 13, "age": "old",    "sm": "none",  "db": "pre", "out": "middle"},
-    {"id": 14, "age": "old",    "sm": "light", "db": "yes", "out": "sick"},
-    {"id": 15, "age": "old",    "sm": "heavy", "db": "yes", "out": "sick"},
-]
-
-
-# ═══════════════════════════════════════════════════════════
-# INFERENCE ENGINE
-# ═══════════════════════════════════════════════════════════
-
-def run_inference(bp: float, chol: float, hr: float,
-                  hedge: str = "none",
-                  age: float = None, smoking: float = None,
-                  diabetes: float = None) -> tuple:
+def apply_clinical_hedge(membership_value, intensity_label):
     """
-    Returns (fired_rules, bpm, cm, hrm, agm, skm, dbm).
-    fired_rules: list of dicts with rule info and firing strength.
+    Adjusts the membership degree based on clinical nuance.
+    Uses concentration/dilation principles.
     """
-    bpm = bp_mf(bp)
-    cm  = chol_mf(chol)
-    hrm = hr_mf(hr)
-    agm = age_mf(age)        if age      is not None else None
-    skm = smoking_mf(smoking) if smoking  is not None else None
-    dbm = diabetes_mf(diabetes) if diabetes is not None else None
+    power = MODIFIER_MAP.get(intensity_label, 1.0)
+    
+    # Apply power-based scaling (Zadeh's operators)
+    result = math.pow(float(membership_value), power)
+    return round(result, 6)
 
-    fired = []
+# Metadata for UI rendering (Simplified)
+UI_MODIFIERS = [
+    {"id": "none",         "label": "Standard"},
+    {"id": "very",         "label": "Very"},
+    {"id": "extremely",    "label": "Extremely"},
+    {"id": "somewhat",     "label": "Somewhat"},
+    {"id": "slightly",     "label": "Slightly"},
+    {"id": "indeed",       "label": "Indeed"},
+    {"id": "more_or_less", "label": "More or Less"},
+]
 
-    # Core rules
-    for r in CORE_RULES:
-        bp_d   = apply_hedge(bpm[r["bp"]],  hedge)
-        ch_d   = apply_hedge(cm[r["chol"]], hedge)
-        hr_d   = apply_hedge(hrm[r["hr"]],  hedge)
-        strength = round(min(bp_d, ch_d, hr_d), 4)
-        fired.append({
-            "id": r["id"], "type": "core",
-            "condition": f'BP={r["bp"]}, Chol={r["chol"]}, HR={r["hr"]}',
-            "bp_set": r["bp"], "chol_set": r["chol"], "hr_set": r["hr"],
-            "bp_deg": bp_d, "chol_deg": ch_d, "hr_deg": hr_d,
-            "strength": strength, "output": r["out"],
+
+# ---------------------------------------------------------
+# KNOWLEDGE BASE: CLINICAL DECISION RULES
+# Definitions for core diagnostics and expanded risk factors.
+# ---------------------------------------------------------
+
+# Primary Clinical Rules (Physiological Indicators)
+PRIMARY_RULESET = [
+    {"id": 1, "bp": "low",    "chol": "low",  "hr": "slow",     "result": "healthy"},
+    {"id": 2, "bp": "low",    "chol": "low",  "hr": "moderate", "result": "healthy"},
+    {"id": 3, "bp": "medium", "chol": "low",  "hr": "moderate", "result": "intermediate"},
+    {"id": 4, "bp": "medium", "chol": "high", "hr": "slow",     "result": "intermediate"},
+    {"id": 5, "bp": "high",   "chol": "low",  "hr": "moderate", "result": "critical"},
+    {"id": 6, "bp": "high",   "chol": "high", "hr": "fast",     "result": "critical"},
+]
+
+# Demographic & Behavioral Risk Factors (Expanded Profile)
+EXPANDED_RISK_LOGIC = [
+    {"id": 7,  "age": "young",  "smoking": "none",  "diabetes": "no",  "result": "healthy"},
+    {"id": 8,  "age": "young",  "smoking": "light", "diabetes": "no",  "result": "healthy"},
+    {"id": 9,  "age": "middle", "smoking": "none",  "diabetes": "no",  "result": "healthy"},
+    {"id": 10, "age": "middle", "smoking": "light", "diabetes": "pre", "result": "intermediate"},
+    {"id": 11, "age": "middle", "smoking": "heavy", "diabetes": "no",  "result": "intermediate"},
+    {"id": 12, "age": "middle", "smoking": "heavy", "diabetes": "pre", "result": "critical"},
+    {"id": 13, "age": "old",    "age": "none",      "diabetes": "pre", "result": "intermediate"},
+    {"id": 14, "age": "old",    "smoking": "light", "diabetes": "yes", "result": "critical"},
+    {"id": 15, "age": "old",    "smoking": "heavy", "diabetes": "yes", "result": "critical"},
+]
+
+# ═══════════════════════════════════════════════════════════
+# ---------------------------------------------------------
+# INFERENCE ENGINE: RULE ACTIVATION & STRENGTH CALCULATION
+# Executes core clinical logic and expanded risk assessment.
+# ---------------------------------------------------------
+
+def execute_inference(bp_val, chol_val, hr_val, hedge="none", 
+                      age_val=None, smoking_val=None, glucose_val=None):
+    """
+    Core engine to activate rules and calculate firing strengths.
+    Returns: (active_rules, all_memberships)
+    """
+    # 1. Map Inputs to Membership Degrees
+    m_bp   = get_bp_levels(bp_val)
+    m_chol = get_cholesterol_levels(chol_val)
+    m_hr   = get_hr_levels(hr_val)
+    
+    # Optional Risk Factors
+    m_age     = assess_age_group(age_val)          if age_val     is not None else None
+    m_smoking = assess_smoking_intensity(smoking_val) if smoking_val is not None else None
+    m_diabetes = assess_diabetic_status(glucose_val)   if glucose_val is not None else None
+
+    active_rules = []
+
+    # 2. Process Primary Clinical Rules
+    for rule in PRIMARY_RULESET:
+        # Resolve degree with linguistic hedge
+        d_bp   = apply_clinical_hedge(m_bp[rule["bp"]],   hedge)
+        d_chol = apply_clinical_hedge(m_chol[rule["chol"]], hedge)
+        d_hr   = apply_clinical_hedge(m_hr[rule["hr"]],   hedge)
+        
+        # Rule Firing Strength (Mamdani Min-Inference)
+        strength = round(min(d_bp, d_chol, d_hr), 4)
+        
+        active_rules.append({
+            "id": rule["id"],
+            "category": "primary",
+            "strength": strength,
+            "outcome": rule["result"],
+            "details": f"BP:{rule['bp']} & Chol:{rule['chol']} & HR:{rule['hr']}"
         })
 
-    # Extended rules (only when extra inputs supplied)
-    if agm and skm and dbm:
-        for r in EXT_RULES:
-            a_d = apply_hedge(agm[r["age"]], hedge)
-            s_d = apply_hedge(skm[r["sm"]],  hedge)
-            d_d = apply_hedge(dbm[r["db"]],  hedge)
-            strength = round(min(a_d, s_d, d_d), 4)
-            fired.append({
-                "id": r["id"], "type": "extended",
-                "condition": f'Age={r["age"]}, Smoking={r["sm"]}, Diabetes={r["db"]}',
-                "age_set": r["age"], "sm_set": r["sm"], "db_set": r["db"],
-                "age_deg": a_d, "sm_deg": s_d, "db_deg": d_d,
-                "strength": strength, "output": r["out"],
+    # 3. Process Behavioral/Demographic Risk Rules
+    if all([m_age, m_smoking, m_diabetes]):
+        for rule in EXPANDED_RISK_LOGIC:
+            d_age = apply_clinical_hedge(m_age[rule["age"]],      hedge)
+            d_smk = apply_clinical_hedge(m_smoking[rule["smoking"]], hedge)
+            d_db  = apply_clinical_hedge(m_diabetes[rule["diabetes"]], hedge)
+            
+            strength = round(min(d_age, d_smk, d_db), 4)
+            
+            active_rules.append({
+                "id": rule["id"],
+                "category": "expanded",
+                "strength": strength,
+                "outcome": rule["result"],
+                "details": f"Age:{rule['age']} & Smoking:{rule['smoking']} & Glucose:{rule['diabetes']}"
             })
 
-    return fired, bpm, cm, hrm, agm, skm, dbm
+    # Consolidate all membership data for downstream analysis
+    memberships = {
+        "bp": m_bp, "chol": m_chol, "hr": m_hr,
+        "age": m_age, "smoking": m_smoking, "diabetes": m_diabetes
+    }
 
+    return active_rules, memberships
+      
+# ---------------------------------------------------------
+# RISK QUANTIFICATION (Defuzzification - Centroid Method)
+# ---------------------------------------------------------
 
-# ═══════════════════════════════════════════════════════════
-# DEFUZZIFICATION — COG (Centroid)
-# ═══════════════════════════════════════════════════════════
-
-def defuzz_cog(fired: list, steps: int = 500) -> float:
+def calculate_final_score(active_rules, resolution=500):
     """
-    Mamdani COG: clips each output MF at its rule's strength, aggregates
-    by max, then computes centroid ∫x·μ(x)dx / ∫μ(x)dx over [0,4].
+    Computes the weighted Risk Score (0-4) using the Centroid (CoG) approach.
+    Aggregates clinical logic through numerical integration.
     """
-    out_fns = {"healthy": out_healthy, "middle": out_middle, "sick": out_sick}
-    dx  = 4.0 / steps
-    num = den = 0.0
-    for i in range(steps + 1):
-        x = i * dx
-        agg = 0.0
-        for r in fired:
-            clipped = min(r["strength"], out_fns[r["output"]](x))
-            agg = max(agg, clipped)
-        num += x * agg * dx
-        den += agg * dx
-    return round(num / den, 4) if den > 0 else 2.0
+    # Mapping outcome labels to their respective membership functions
+    risk_profiles = {
+        "healthy":      risk_level_healthy,
+        "intermediate": risk_level_intermediate,
+        "critical":     risk_level_critical
+    }
+    
+    # Integration parameters over the 0-4 risk scale
+    scale_min, scale_max = 0.0, 4.0
+    step_size = (scale_max - scale_min) / resolution
+    
+    numerator = 0.0
+    denominator = 0.0
+
+    # Numerical integration across the risk spectrum
+    for i in range(resolution + 1):
+        x_val = scale_min + (i * step_size)
+        aggregated_membership = 0.0
+        
+        # Aggregate fuzzy outputs (Mamdani max-min composition)
+        for rule in active_rules:
+            # Clip the output profile by the rule's activation strength
+            membership_fn = risk_profiles.get(rule["outcome"])
+            if membership_fn:
+                clipped_value = min(rule["strength"], membership_fn(x_val))
+                aggregated_membership = max(aggregated_membership, clipped_value)
+        
+        # Accumulate integrals
+        numerator   += x_val * aggregated_membership
+        denominator += aggregated_membership
+
+    # Calculate centroid; default to 2.0 (Neutral/Medium) if no rules fire
+    if denominator == 0:
+        return 2.0
+        
+    final_score = numerator / denominator
+    return round(final_score, 4)
 
 
-# ═══════════════════════════════════════════════════════════
-# DEFUZZIFICATION — Sugeno
-# ═══════════════════════════════════════════════════════════
+# ---------------------------------------------------------
+# RISK SCORING METHODOLOGIES (Sugeno & Weighted Average)
+# ---------------------------------------------------------
 
-SUGENO_Z = {"healthy": 0.75, "middle": 2.00, "sick": 3.25}
+# Fixed risk weights for zero-order weighted average
+RISK_WEIGHTS = {
+    "healthy":      0.75,
+    "intermediate": 2.00,
+    "critical":     3.25
+}
 
-def defuzz_sugeno(fired: list) -> float:
-    """Sugeno zero-order: z = Σ(wᵢ·zᵢ) / Σwᵢ"""
-    ws = wd = 0.0
-    for r in fired:
-        ws += r["strength"] * SUGENO_Z[r["output"]]
-        wd += r["strength"]
-    return round(ws / wd, 4) if wd > 0 else 2.0
-
-
-# ═══════════════════════════════════════════════════════════
-# CLASSIFICATION
-# ═══════════════════════════════════════════════════════════
-
-def classify(val: float) -> dict:
-    if val < 1.5:
-        return {"label": "Healthy",     "cls": "healthy", "emoji": "💚", "risk": "Low"}
-    if val < 2.55:
-        return {"label": "Middle Risk", "cls": "middle",  "emoji": "🟡", "risk": "Moderate"}
-    return     {"label": "Sick",        "cls": "sick",    "emoji": "❤️",  "risk": "High"}
-
-
-# ═══════════════════════════════════════════════════════════
-# FULL DIAGNOSIS PIPELINE
-# ═══════════════════════════════════════════════════════════
-
-def diagnose(bp: float, chol: float, hr: float,
-             hedge: str = "none",
-             age: float = None, smoking: float = None,
-             diabetes: float = None) -> dict:
+def calculate_weighted_average(active_rules):
     """
-    Run full fuzzy diagnosis and return a comprehensive result dict.
+    Computes a simplified risk score using weighted averaging (Sugeno-style).
+    Provides a faster alternative to Centroid calculation.
     """
-    fired, bpm, cm, hrm, agm, skm, dbm = run_inference(
-        bp, chol, hr, hedge, age, smoking, diabetes)
+    weighted_sum = 0.0
+    total_strength = 0.0
+    
+    for rule in active_rules:
+        weight = RISK_WEIGHTS.get(rule["outcome"], 2.0)
+        weighted_sum += rule["strength"] * weight
+        total_strength += rule["strength"]
+        
+    if total_strength == 0:
+        return 2.0
+        
+    return round(weighted_sum / total_strength, 4)
 
-    cog    = defuzz_cog(fired)
-    sugeno = defuzz_sugeno(fired)
 
+# ---------------------------------------------------------
+# CLINICAL CLASSIFICATION & DIAGNOSTIC PIPELINE
+# ---------------------------------------------------------
+
+def categorize_risk_score(score):
+    """Maps numerical risk scores to clinical status labels."""
+    if score < 1.5:
+        return {"label": "Optimal / Healthy", "status": "low_risk", "severity": "Low"}
+    if score < 2.55:
+        return {"label": "Intermediate Risk", "status": "moderate_risk", "severity": "Moderate"}
+    
+    return {"label": "Critical / High Risk", "status": "high_risk", "severity": "High"}
+
+
+def run_diagnostic_pipeline(bp, chol, hr, hedge="none", 
+                            age=None, smoking=None, glucose=None):
+    """
+    Executes the full diagnostic flow: 
+    Fuzzification -> Inference -> Dual-method Scoring -> Classification.
+    """
+    # 1. Execute Inference Engine
+    active_rules, memberships = execute_inference(
+        bp, chol, hr, hedge, age, smoking, glucose
+    )
+
+    # 2. Calculate scores using two different methodologies for validation
+    centroid_score = calculate_final_score(active_rules)
+    weighted_score = calculate_weighted_average(active_rules)
+
+    # 3. Consolidate Clinical Report
     return {
-        "inputs": {
+        "parameters": {
             "bp": bp, "chol": chol, "hr": hr,
-            "age": age, "smoking": smoking, "diabetes": diabetes,
+            "age": age, "smoking": smoking, "glucose": glucose,
         },
-        "hedge": hedge,
-        "memberships": {
-            "bp":   bpm, "chol": cm, "hr": hrm,
-            "age":  agm, "smoking": skm, "diabetes": dbm,
+        "intensity_modifier": hedge,
+        "membership_degrees": memberships,
+        "active_rules_count": sum(1 for r in active_rules if r["strength"] > 0),
+        "primary_assessment": {
+            "score": centroid_score, 
+            "classification": categorize_risk_score(centroid_score)
         },
-        "fired": fired,
-        "n_fired": sum(1 for r in fired if r["strength"] > 0),
-        "cog":    {"value": cog,    "cls": classify(cog)},
-        "sugeno": {"value": sugeno, "cls": classify(sugeno)},
-        "diff":   round(abs(cog - sugeno), 4),
+        "secondary_assessment": {
+            "score": weighted_score, 
+            "classification": categorize_risk_score(weighted_score)
+        },
+        "variance": round(abs(centroid_score - weighted_score), 4),
+        "raw_rules": active_rules
+    }
+                              
+
+
+# ---------------------------------------------------------
+# VISUALIZATION UTILITIES: DISTRIBUTION DATA GENERATION
+# Generates coordinate sets for clinical profile plotting.
+# ---------------------------------------------------------
+
+def generate_profile_coordinates(variable_name, modifier="none", resolution=200):
+    """
+    Generates X and Y coordinates for clinical variable distributions.
+    Used for front-end rendering of membership curves.
+    """
+    # Define clinical ranges for each parameter
+    domain_configs = {
+        "bp":       (80, 220,  get_bp_levels),
+        "chol":     (80, 300,  get_cholesterol_levels),
+        "hr":       (30, 220,  get_hr_levels),
+        "age":      (0, 100,   assess_age_group),
+        "smoking":  (0, 4,     assess_smoking_intensity),
+        "glucose":  (55, 360,  assess_diabetic_status),
+        "output":   (0, 4,     None) # Special case for output scale
     }
 
+    if variable_name not in domain_configs:
+        return {}
 
-# ═══════════════════════════════════════════════════════════
-# MF CURVE DATA  (for plotting)
-# ═══════════════════════════════════════════════════════════
-
-def mf_curves(var: str, hedge: str = "none", n: int = 200) -> dict:
-    """Return x + y-arrays for all sets of a variable, with optional hedge."""
-    configs = {
-        "bp":   (np.linspace(80, 220, n),
-                 {"low": lambda x: apply_hedge(bp_mf(x)["low"], hedge),
-                  "medium": lambda x: apply_hedge(bp_mf(x)["medium"], hedge),
-                  "high": lambda x: apply_hedge(bp_mf(x)["high"], hedge)}),
-        "chol": (np.linspace(80, 300, n),
-                 {"low": lambda x: apply_hedge(chol_mf(x)["low"], hedge),
-                  "high": lambda x: apply_hedge(chol_mf(x)["high"], hedge)}),
-        "hr":   (np.linspace(30, 220, n),
-                 {"slow": lambda x: apply_hedge(hr_mf(x)["slow"], hedge),
-                  "moderate": lambda x: apply_hedge(hr_mf(x)["moderate"], hedge),
-                  "fast": lambda x: apply_hedge(hr_mf(x)["fast"], hedge)}),
-        "output": (np.linspace(0, 4, n),
-                   {"healthy": out_healthy,
-                    "middle":  out_middle,
-                    "sick":    out_sick}),
-        "age":  (np.linspace(0, 100, n),
-                 {"young": lambda x: age_mf(x)["young"],
-                  "middle": lambda x: age_mf(x)["middle"],
-                  "old": lambda x: age_mf(x)["old"]}),
-        "smoking": (np.linspace(0, 4, n),
-                    {"none": lambda x: smoking_mf(x)["none"],
-                     "light": lambda x: smoking_mf(x)["light"],
-                     "heavy": lambda x: smoking_mf(x)["heavy"]}),
-        "diabetes": (np.linspace(55, 360, n),
-                     {"no": lambda x: diabetes_mf(x)["no"],
-                      "pre": lambda x: diabetes_mf(x)["pre"],
-                      "yes": lambda x: diabetes_mf(x)["yes"]}),
+    min_val, max_val, mapping_fn = domain_configs[variable_name]
+    x_axis = np.linspace(min_val, max_val, resolution)
+    
+    response = {
+        "x_axis": [round(float(v), 3) for v in x_axis]
     }
-    xs, sets = configs[var]
+
+    # Handle standard input variables
+    if mapping_fn:
+        # Get labels from a sample call
+        sample_labels = mapping_fn(min_val).keys()
+        for label in sample_labels:
+            y_values = []
+            for x in x_axis:
+                mu = mapping_fn(x)[label]
+                # Apply clinical intensity modifier (hedge)
+                adjusted_mu = apply_clinical_hedge(mu, modifier)
+                y_values.append(round(adjusted_mu, 4))
+            response[label] = y_values
+            
+    # Handle the risk scale output profiles
+    else:
+        output_profiles = {
+            "healthy":      risk_level_healthy,
+            "intermediate": risk_level_intermediate,
+            "critical":     risk_level_critical
+        }
+        for label, fn in output_profiles.items():
+            response[label] = [round(fn(x), 4) for x in x_axis]
+
+    return response
+                               
+
+# ---------------------------------------------------------
+# ANALYTICAL UTILITIES: 3D RISK SURFACE GENERATION
+# Generates spatial data for BP x Cholesterol interaction.
+# ---------------------------------------------------------
+
+def generate_risk_surface(fixed_hr=75, modifier="none", 
+                          grid_resolution=25, 
+                          age=None, smoking=None, glucose=None):
+    """
+    Computes a 3D meshgrid for risk visualization (Blood Pressure vs. Cholesterol).
+    Maps the interaction between physiological variables and the final CHD score.
+    """
+    bp_range   = np.linspace(90, 210, grid_resolution).tolist()
+    chol_range = np.linspace(90, 290, grid_resolution).tolist()
+    
+    risk_matrix = []
+    
+    for bp in bp_range:
+        row_data = []
+        for chol in chol_range:
+            # Execute inference for each coordinate in the grid
+            active_rules, _ = execute_inference(
+                bp, chol, fixed_hr, modifier, age, smoking, glucose
+            )
+            # Use Centroid method for high-precision surface mapping
+            score = calculate_final_score(active_rules)
+            row_data.append(round(score, 3))
+        risk_matrix.append(row_data)
+
     return {
-        "x":   [round(float(v), 3) for v in xs],
-        **{k: [round(fn(x), 4) for x in xs] for k, fn in sets.items()}
+        "bp_axis": bp_range, 
+        "chol_axis": chol_range, 
+        "z_matrix": risk_matrix
     }
 
 
-# ═══════════════════════════════════════════════════════════
-# 3D SURFACE DATA
-# ═══════════════════════════════════════════════════════════
+# ---------------------------------------------------------
+# VALIDATION DATASETS: CLINICAL CASE STUDIES
+# Representative patient profiles for system verification.
+# ---------------------------------------------------------
 
-def surface3d_data(fixed_hr: float = 75, hedge: str = "none",
-                   bp_n: int = 25, chol_n: int = 25,
-                   age=None, smoking=None, diabetes=None) -> dict:
-    """Return meshgrid data for 3D surface (BP × Chol → CHD)."""
-    bp_arr   = np.linspace(90, 210, bp_n).tolist()
-    chol_arr = np.linspace(90, 290, chol_n).tolist()
-    z = []
-    for bp in bp_arr:
-        row = []
-        for chol in chol_arr:
-            fired, *_ = run_inference(bp, chol, fixed_hr, hedge, age, smoking, diabetes)
-            row.append(round(defuzz_cog(fired), 3))
-        z.append(row)
-    return {"bp": bp_arr, "chol": chol_arr, "z": z}
-
-
-# ═══════════════════════════════════════════════════════════
-# PRESET PATIENTS  (from assignment)
-# ═══════════════════════════════════════════════════════════
-
-PRESET_PATIENTS = [
-    {"id": 1, "name": "Patient 1",
-     "bp": 105, "chol": 160, "hr": 55,
-     "age": 28,  "smoking": 0.0, "diabetes": 85},
-    {"id": 2, "name": "Patient 2",
-     "bp": 120, "chol": 195, "hr": 65,
-     "age": 45,  "smoking": 0.5, "diabetes": 95},
-    {"id": 3, "name": "Patient 3",
-     "bp": 165, "chol": 186, "hr": 95,
-     "age": 62,  "smoking": 0.9, "diabetes": 135},
+CLINICAL_CASE_STUDIES = [
+    {
+        "case_id": "P-001", "description": "Baseline Low Risk",
+        "bp": 105, "chol": 160, "hr": 55,
+        "age": 28, "smoking": 0.0, "glucose": 85
+    },
+    {
+        "case_id": "P-002", "description": "Borderline / Moderate Risk",
+        "bp": 120, "chol": 195, "hr": 65,
+        "age": 45, "smoking": 0.5, "glucose": 95
+    },
+    {
+        "case_id": "P-003", "description": "High-Risk Clinical Profile",
+        "bp": 165, "chol": 186, "hr": 95,
+        "age": 62, "smoking": 0.9, "glucose": 135
+    },
 ]
