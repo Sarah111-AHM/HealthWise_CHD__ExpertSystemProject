@@ -1,5 +1,5 @@
 
-# 🫀 HealthWise — Coronary Heart Disease Fuzzy Expert System
+# HealthWise (Coronary Heart Disease Fuzzy Expert System)
 
 > **AI-Powered Clinical Decision Support System** | Fuzzy Logic | Neuro-Fuzzy Optimization | Real-time Risk Assessment
 
@@ -12,7 +12,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Contents
 - [Vision & Clinical Content](#-vision--clinical-content)
 - [Logical Architecture](#-logical-architecture)
 - [User Guide & Interface Navigation](#-user-guide--interface-navigation)
@@ -27,7 +27,7 @@
 
 ---
 
-## 🎯 Vision & Clinical Content
+## Vision & Clinical Content
 
 ### **Vision Statement**
 HealthWise aims to bridge the gap between advanced computational intelligence and clinical practice by providing an interpretable, accurate, and real-time decision support system for Coronary Heart Disease (CHD) risk assessment. By leveraging fuzzy logic's ability to handle medical uncertainty and linguistic variables, we create a system that mirrors clinical reasoning while maintaining mathematical rigor.
@@ -70,7 +70,7 @@ Integrates age, smoking habits, and diabetic status for comprehensive risk profi
 
 ---
 
-## 🏗️ Logical Architecture
+## Logical Architecture
 
 ### **System Architecture Diagram**
 
@@ -176,7 +176,7 @@ Score = Σ (strengthᵢ × weightᵢ) / Σ strengthᵢ
 
 ---
 
-## 🖥️ User Guide & Interface Navigation
+## User Guide & Interface Navigation
 
 ### **Interactive Dashboard Demo**
 
@@ -267,7 +267,7 @@ Score = Σ (strengthᵢ × weightᵢ) / Σ strengthᵢ
 
 ---
 
-## 🔬 Research & Optimization
+## Research & Optimization
 
 ### **Neuro-Fuzzy Architecture**
 
@@ -315,7 +315,7 @@ MLP Architecture:
 
 ---
 
-## 🔧 Maintenance & Stability
+## Maintenance & Stability
 
 ### **System Requirements**
 
@@ -403,7 +403,7 @@ The system includes built-in monitoring:
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### **Frontend Technologies**
 
@@ -441,7 +441,7 @@ The system includes built-in monitoring:
 
 ---
 
-## 🚀 Installation & Deployment
+## Installation & Deployment
 
 ### **Quick Start (Local)**
 
@@ -489,7 +489,7 @@ docker run -p 5000:5000 healthwise-chd
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 ### **Diagnostic Endpoints**
 
@@ -546,7 +546,7 @@ curl -X POST http://localhost:5000/api/diagnose \
 
 ---
 
-## 📊 Clinical Validation
+## Clinical Validation
 
 ### **Validation Methodology**
 
@@ -588,7 +588,7 @@ The system was validated against:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please follow these steps:
 
@@ -606,28 +606,21 @@ We welcome contributions! Please follow these steps:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 👨‍⚕️ Author
+## Author
 
-**Dr. Mohammed A. Altahrawi**  
-*University College of Applied Sciences (UCAS)*  
-*Department of Computer Science & AI*  
-mohammed.altahrawi@ucas.edu.ps  
-[Research Gate](https://www.researchgate.net/profile/Mohammed-Altahrawi)  
+** Sarah Abumandil**  
+*University College of Applied Sciences*  
+*AI Student*  
+sabumandil@gmail.com 
 
 ---
 
-## Acknowledgments
-
-- **UCAS** for supporting clinical AI research
-- **Framingham Heart Study** for validated risk factors
-- **Open Source Community** for essential libraries
-- **Medical Experts** for clinical validation
 
 ---
 
@@ -639,4 +632,4 @@ mohammed.altahrawi@ucas.edu.ps
 
 ---
 
-**Built with ❤️ for better clinical decision support**
+**Built with ❤️ for better clinical decision support , and if u like repo plz star it ✨**
