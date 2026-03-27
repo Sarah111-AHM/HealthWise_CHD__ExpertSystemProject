@@ -267,6 +267,17 @@ Score = Σ (strengthᵢ × weightᵢ) / Σ strengthᵢ
 
 ---
 
+
+| Image File (Your Name) | Suggested New Name | Where to Place in README |
+|------------------------|--------------------|--------------------------|
+| `IMG-20260327-WA0025.jpg` (الصورة الأولى) | `overview.png` | At the top, after the intro. |
+| `IMG-20260327-WA0026.jpg` (الصورة الثانية) | `analytics.png` | Under the Analytics section. |
+| `IMG-20260327-WA0024.jpg` (الصورة الثالثة) | `risk-surface.png` | Under Risk Surface section. |
+| `IMG-20260327-WA0022.jpg` (الصورة الرابعة) | `sensitivity.png` | Under Sensitivity Analysis section. |
+| `IMG-20260327-WA0023.jpg` (الصورة الخامسة) | `comparison.png` | Under Methodological Comparison section. |
+| Other images (case studies, sliders, etc.) | As listed earlier | Under Diagnostics section. |
+---
+
 ## Research & Optimization
 
 ### **Neuro-Fuzzy Architecture**
