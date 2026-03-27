@@ -151,7 +151,17 @@ def api_sensitivity_profile():
                 baseline[key] = parse_float(payload.get(key), baseline[key])
 
     analysis = analyze_factor_impact(baseline, modifier)
-    return jsonify(analysis)
+    
+    # Format response for frontend compatibility
+    formatted_analysis = {
+        "analysis_grid": analysis.get("analysis_grid", {}),
+        "primary_driver": analysis.get("primary_driver", "bp"),
+        "impact_ranking": analysis.get("impact_ranking", []),
+        "baseline_profile": analysis.get("baseline_profile", baseline),
+        "factors": analysis.get("analysis_grid", {})
+    }
+    
+    return jsonify(formatted_analysis)
 
 # ---------------------------------------------------------
 # LOGIC OPTIMIZATION & CALIBRATION (Neuro-Fuzzy Module)
@@ -204,26 +214,29 @@ def api_knowledge_base():
 @app.route("/api/hedge-comparison")
 def api_hedge_comparison():
     """Returns comparison of different hedges across case studies."""
-    hedges = [{"value": h["id"], "label": h["label"]} for h in UI_MODIFIERS[:5]]
+    hedges = [{"id": h["id"], "label": h["label"]} for h in UI_MODIFIERS[:5]]
     results = []
     
     for case in CLINICAL_CASE_STUDIES:
         case_results = {}
         for hedge in hedges:
             report = run_diagnostic_pipeline(
-                case["bp"], case["chol"], case["hr"], hedge["value"],
+                case["bp"], case["chol"], case["hr"], hedge["id"],
                 case.get("age"), case.get("smoking"), case.get("glucose")
             )
-            case_results[hedge["value"]] = {
+            case_results[hedge["id"]] = {
                 "cog": report["primary_assessment"]["score"],
                 "sugeno": report["secondary_assessment"]["score"]
             }
         results.append({
             "patient": {
-                "name": case.get("case_id", f"P-{len(results)+1}"),
+                "name": case.get("case_id", f"Case {len(results)+1}"),
                 "bp": case["bp"],
                 "chol": case["chol"],
-                "hr": case["hr"]
+                "hr": case["hr"],
+                "age": case.get("age", 45),
+                "smoking": case.get("smoking", 0.5),
+                "glucose": case.get("glucose", 110)
             },
             "results": case_results
         })
@@ -232,6 +245,38 @@ def api_hedge_comparison():
         "hedges": hedges,
         "table": results
     })
+
+@app.route("/api/health")
+def api_health():
+    """Health check endpoint for monitoring."""
+    return jsonify({
+        "status": "healthy",
+        "version": "2.0.0",
+        "modules": {
+            "fuzzy_engine": "active",
+            "sensitivity": "active",
+            "neuro_fuzzy": "active"
+        }
+    })
+
+# ---------------------------------------------------------
+# ERROR HANDLERS
+# ---------------------------------------------------------
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors gracefully."""
+    return jsonify({"error": "Endpoint not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors gracefully."""
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle all other exceptions."""
+    return jsonify({"error": str(e)}), 500
 
 # ---------------------------------------------------------
 # APPLICATION ENTRY POINT
@@ -242,4 +287,5 @@ application = app
 
 if __name__ == "__main__":
     # Local development server settings
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host="0.0.0.0", port=port)
