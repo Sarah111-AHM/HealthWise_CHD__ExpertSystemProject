@@ -3,7 +3,12 @@ Core Application Gateway - HealthWise CHD Expert System.
 Handles clinical routing, parameter processing, and API orchestration.
 """
 
+import os
+import sys
 from flask import Flask, render_template, request, jsonify
+
+# Add current directory to path for proper imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Unified imports from our refactored modules
 from fuzzy_engine import (
@@ -13,7 +18,10 @@ from fuzzy_engine import (
 from sensitivity import analyze_factor_impact, CLINICAL_BASELINE
 import neuro_fuzzy as nf
 
-app = Flask(__name__)
+# Initialize Flask app with explicit template and static folders
+app = Flask(__name__, 
+            template_folder='templates',
+            static_folder='static')
 
 # ---------------------------------------------------------
 # Utility: Safe Parameter Extraction
@@ -33,9 +41,16 @@ def parse_float(value, default=None):
 @app.route("/")
 def index():
     """Serves the primary clinical dashboard."""
+    # Convert case studies to include ID for template
+    patients_with_ids = []
+    for idx, case in enumerate(CLINICAL_CASE_STUDIES, 1):
+        case_copy = case.copy()
+        case_copy['id'] = idx
+        patients_with_ids.append(case_copy)
+    
     return render_template(
         "index.html",
-        patients=CLINICAL_CASE_STUDIES,
+        patients=patients_with_ids,
         modifiers=UI_MODIFIERS,
     )
 
@@ -80,7 +95,6 @@ def api_diagnose():
 
     return jsonify(report)
 
-
 # ---------------------------------------------------------
 # ANALYTICAL SERVICES: VISUALIZATION DATA
 # ---------------------------------------------------------
@@ -94,7 +108,6 @@ def api_membership_distribution(var_type):
         
     modifier = request.args.get("hedge", "none")
     return jsonify(generate_profile_coordinates(var_type, modifier))
-
 
 @app.route("/api/surface3d")
 def api_risk_surface():
@@ -118,12 +131,11 @@ def api_case_studies():
     for case in CLINICAL_CASE_STUDIES:
         report = run_diagnostic_pipeline(
             case["bp"], case["chol"], case["hr"], modifier,
-            case["age"], case["smoking"], case["glucose"]
+            case.get("age"), case.get("smoking"), case.get("glucose")
         )
         study_results.append({"case_profile": case, "diagnostic_report": report})
         
     return jsonify(study_results)
-
 
 @app.route("/api/sensitivity", methods=["GET", "POST"])
 def api_sensitivity_profile():
@@ -153,7 +165,6 @@ def api_calibrate_logic():
     
     performance_metrics = nf.calibrate_logic(sample_size)
     return jsonify(performance_metrics)
-
 
 @app.route("/api/logic-estimate", methods=["POST"])
 def api_rapid_estimate():
@@ -190,15 +201,45 @@ def api_knowledge_base():
         "expanded_risk_logic": EXPANDED_RISK_LOGIC
     })
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
+@app.route("/api/hedge-comparison")
+def api_hedge_comparison():
+    """Returns comparison of different hedges across case studies."""
+    hedges = [{"value": h["id"], "label": h["label"]} for h in UI_MODIFIERS[:5]]
+    results = []
+    
+    for case in CLINICAL_CASE_STUDIES:
+        case_results = {}
+        for hedge in hedges:
+            report = run_diagnostic_pipeline(
+                case["bp"], case["chol"], case["hr"], hedge["value"],
+                case.get("age"), case.get("smoking"), case.get("glucose")
+            )
+            case_results[hedge["value"]] = {
+                "cog": report["primary_assessment"]["score"],
+                "sugeno": report["secondary_assessment"]["score"]
+            }
+        results.append({
+            "patient": {
+                "name": case.get("case_id", f"P-{len(results)+1}"),
+                "bp": case["bp"],
+                "chol": case["chol"],
+                "hr": case["hr"]
+            },
+            "results": case_results
+        })
+    
+    return jsonify({
+        "hedges": hedges,
+        "table": results
+    })
 
 # ---------------------------------------------------------
 # APPLICATION ENTRY POINT
 # ---------------------------------------------------------
 
+# For Vercel serverless deployment
+application = app
+
 if __name__ == "__main__":
     # Local development server settings
-    # Note: For production (Vercel/Gunicorn), this block is bypassed.
-    app.run()
+    app.run(debug=True)
