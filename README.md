@@ -1,6 +1,4 @@
-Here's a comprehensive README file for your HealthWise CHD Expert System:
 
-```markdown
 # 🫀 HealthWise — Coronary Heart Disease Fuzzy Expert System
 
 > **AI-Powered Clinical Decision Support System** | Fuzzy Logic | Neuro-Fuzzy Optimization | Real-time Risk Assessment
