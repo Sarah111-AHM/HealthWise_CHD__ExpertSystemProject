@@ -4,627 +4,248 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HealthWise | Clinical Decision Support System</title>
-  
+
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <!-- Plotly for Charts -->
   <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
-  
-  <!-- Font Awesome for Icons (More reliable than Lucide) -->
+
+  <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
+  <!-- FIX 1: Link the external stylesheet via Flask url_for -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
   <style>
-    /* Simple but Professional CSS */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
-    }
-    
-    /* Header */
-    .main-header {
-      background: white;
-      border-bottom: 1px solid #e2e8f0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      padding: 0.75rem 0;
-    }
-    
-    .header-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .brand-area {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    
-    .logo-circle {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.5rem;
-    }
-    
-    .brand-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-    
-    .text-primary {
-      color: #2563eb;
-    }
-    
-    .brand-status {
-      font-size: 0.75rem;
-      color: #64748b;
-    }
-    
-    /* Navigation */
-    .navigation-bar {
-      display: flex;
-      gap: 0.5rem;
-      background: #f1f5f9;
-      padding: 0.25rem;
-      border-radius: 12px;
-    }
-    
-    .nav-btn {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      background: transparent;
-      color: #64748b;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .nav-btn i {
-      font-size: 1rem;
-    }
-    
-    .nav-btn:hover {
-      background: white;
-      color: #2563eb;
-    }
-    
-    .nav-btn.active {
-      background: white;
-      color: #2563eb;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    /* Main Content */
-    .content-wrapper {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    
-    .tab-panel {
-      display: none;
-      animation: fadeIn 0.3s ease-out;
-    }
-    
-    .tab-panel.active {
-      display: block;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* Cards */
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .card-header i {
-      color: #2563eb;
-      font-size: 1.25rem;
-    }
-    
-    .card-header h3 {
-      font-size: 1rem;
-      font-weight: 600;
-    }
-    
-    /* Grid Layouts */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 2rem;
-    }
-    
-    .analytics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 1.5rem;
-    }
-    
-    @media (max-width: 768px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-      .analytics-grid {
-        grid-template-columns: 1fr;
-      }
-      .navigation-bar {
-        flex-wrap: wrap;
-      }
-    }
-    
-    /* Form Controls */
-    .control-group {
-      margin-bottom: 1.25rem;
-    }
-    
-    .control-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #475569;
-      margin-bottom: 0.5rem;
-    }
-    
-    .badge {
-      background: #eff6ff;
-      color: #2563eb;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      font-family: monospace;
-      font-size: 0.8rem;
-    }
-    
-    .modern-slider {
-      width: 100%;
-      height: 6px;
-      border-radius: 10px;
-      background: #e2e8f0;
-      outline: none;
-      -webkit-appearance: none;
-    }
-    
-    .modern-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border: 2px solid #2563eb;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .range-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.7rem;
-      color: #94a3b8;
-      margin-top: 0.25rem;
-    }
-    
-    /* Modifier Grid */
-    .modifier-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.5rem;
-    }
-    
-    .modifier-tile {
-      position: relative;
-      cursor: pointer;
-    }
-    
-    .modifier-tile input {
-      position: absolute;
-      opacity: 0;
-    }
-    
-    .tile-content {
-      padding: 0.6rem;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      text-align: center;
-      transition: all 0.2s;
-    }
-    
-    .modifier-tile input:checked + .tile-content {
-      border-color: #2563eb;
-      background: #eff6ff;
-    }
-    
-    .tile-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-    
-    .pill-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid #e2e8f0;
-      background: white;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.8rem;
-    }
-    
-    .pill-btn.active {
-      background: #2563eb;
-      color: white;
-      border-color: #2563eb;
-    }
-    
-    .modifier-pill-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    
-    /* Buttons */
-    .primary-action-btn {
-      width: 100%;
-      padding: 0.875rem;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      transition: all 0.2s;
-      margin-top: 1rem;
-    }
-    
-    .primary-action-btn:hover {
-      background: #1d4ed8;
-      transform: translateY(-2px);
-    }
-    
-    .case-btn {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      text-align: left;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .case-btn:hover {
-      background: #eff6ff;
-      border-color: #2563eb;
-    }
-    
-    .case-id {
-      font-weight: 600;
-      display: block;
-    }
-    
-    .case-summary {
-      font-size: 0.75rem;
-      color: #64748b;
-    }
-    
-    /* Result Display */
-    .empty-state-card {
-      background: white;
-      border-radius: 12px;
-      padding: 3rem;
-      text-align: center;
-      border: 2px dashed #e2e8f0;
-    }
-    
-    .pulse-icon-container {
-      width: 80px;
-      height: 80px;
-      background: #eff6ff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1rem;
-      font-size: 2rem;
-      color: #2563eb;
-    }
-    
-    /* Clinical Alert */
-    .clinical-alert {
-      display: flex;
-      gap: 1rem;
-      padding: 1rem;
-      background: #eff6ff;
-      border-radius: 12px;
-      margin-bottom: 1.5rem;
-      border-left: 4px solid #2563eb;
-    }
-    
-    .clinical-alert i {
-      font-size: 1.25rem;
-      color: #2563eb;
-    }
-    
-    /* Tables */
-    .table-container {
-      overflow-x: auto;
-    }
-    
-    .clinical-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-    
-    .clinical-table th {
-      text-align: left;
-      padding: 0.75rem;
-      background: #f8fafc;
-      border-bottom: 2px solid #e2e8f0;
-    }
-    
-    .clinical-table td {
-      padding: 0.75rem;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .code-font {
-      font-family: monospace;
-    }
-    
-    /* Footer */
-    .main-footer {
-      margin-top: 3rem;
-      padding: 2rem;
-      background: white;
-      border-top: 1px solid #e2e8f0;
-      text-align: center;
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-    
-    /* Chart Containers */
-    .chart-container {
-      height: 350px;
-    }
-    
-    .main-plot-area {
-      height: 550px;
-    }
-    
-    .chart-container-sm {
-      height: 400px;
-    }
-    
-    /* Legend */
-    .risk-legend-grid {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      margin-top: 1rem;
-    }
-    
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .legend-indicator {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-    }
-    
-    .legend-item.low .legend-indicator { background: #10b981; }
-    .legend-item.moderate .legend-indicator { background: #f59e0b; }
-    .legend-item.high .legend-indicator { background: #ef4444; }
-    
-    .legend-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-    
-    .legend-range {
-      font-size: 0.7rem;
-      color: #64748b;
-    }
-    
-    /* Loading */
-    .spin {
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    
-    .loading-state {
-      text-align: center;
-      padding: 2rem;
+    /* Supplemental styles for elements rendered dynamically by app.js */
+
+    /* Grid variants */
+    .dashboard-grid-2  { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; }
+    .dashboard-grid-3  { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; margin-bottom:1.5rem; }
+    .dashboard-grid-4  { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+    .analytics-grid-2  { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+
+    /* Card base */
+    .card { background:#fff; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .card-header { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; padding-bottom:.75rem; border-bottom:1px solid #e2e8f0; }
+    .card-header i { color:#2563eb; font-size:1.1rem; }
+    .card-header h3 { font-size:1rem; font-weight:600; margin:0; }
+
+    /* Shadow / border utilities */
+    .shadow-sm { box-shadow:0 1px 3px rgba(0,0,0,.06); }
+    .shadow-md { box-shadow:0 4px 6px -1px rgba(0,0,0,.1); }
+    .border-top-low      { border-top:4px solid #10b981; }
+    .border-top-moderate { border-top:4px solid #f59e0b; }
+    .border-top-high     { border-top:4px solid #ef4444; }
+    .border-left-primary { border-left:4px solid #2563eb; }
+    .border-left-warning { border-left:4px solid #f59e0b; }
+    .border-accent       { border:1px solid #2563eb; }
+    .border-left         { border-left:1px solid #e2e8f0; }
+
+    /* Spacing */
+    .mb-xs{margin-bottom:.25rem} .mb-sm{margin-bottom:.5rem}
+    .mb-md{margin-bottom:1rem}   .mb-lg{margin-bottom:1.5rem}
+    .mt-sm{margin-top:.5rem}     .mt-xs{margin-top:.25rem}
+    .p-sm{padding:.75rem}        .mx-auto{margin:0 auto}
+
+    /* Flex */
+    .flex-row{display:flex} .items-center{align-items:center}
+    .justify-between{justify-content:space-between} .gap-lg{gap:1.5rem}
+
+    /* Text */
+    .text-primary{color:#2563eb} .text-muted{color:#64748b}
+    .text-light{color:#94a3b8}   .text-success{color:#10b981}
+    .text-warning{color:#f59e0b} .text-center{text-align:center}
+    .font-bold{font-weight:700}  .small{font-size:.8rem}
+    .bg-light{background:#f8fafc}
+    .sec-lbl{font-size:.8rem;font-weight:700;color:#475569;margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.05em;display:block}
+
+    /* Progress variants */
+    .progress-track.lg{height:14px;border-radius:10px}
+    .progress-track.sm{height:6px}
+
+    /* Spinner */
+    .spin{animation:spin 1s linear infinite;display:inline-block}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+    /* Chart containers */
+    .chart-container{height:350px} .chart-container-sm{height:400px}
+
+    /* Fade-in */
+    .report-fade-in{animation:rfi .4s ease-out}
+    @keyframes rfi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Loading / error */
+    .loading-state{text-align:center;padding:3rem;color:#94a3b8}
+    .error-msg{background:#fee2e2;color:#991b1b;padding:1rem;border-radius:8px;text-align:center}
+
+    /* Pill buttons */
+    .pill-btn,.tab-pill-btn{padding:.4rem 1rem;border:1px solid #e2e8f0;background:#fff;border-radius:20px;cursor:pointer;font-size:.8rem;font-weight:500;transition:all .2s}
+    .pill-btn.active,.tab-pill-btn.active,.pill-btn:hover,.tab-pill-btn:hover{background:#2563eb;color:#fff;border-color:#2563eb}
+    .modifier-pill-container{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+
+    /* Case buttons */
+    .case-btn{width:100%;padding:.75rem;margin-bottom:.5rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;text-align:left;cursor:pointer;transition:all .2s}
+    .case-btn:hover{background:#eff6ff;border-color:#2563eb}
+    .case-id{font-weight:600;display:block;font-size:.875rem}
+    .case-summary{font-size:.75rem;color:#64748b}
+
+    /* Case selector (membership tab) */
+    .case-selector-btn{padding:.5rem 1rem;border:1px solid #e2e8f0;background:#f8fafc;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s}
+    .case-selector-btn.active,.case-selector-btn:hover{background:#eff6ff;border-color:#2563eb;color:#2563eb}
+
+    /* Diagnostic result card */
+    .diagnostic-result-card{background:#fff;border-radius:12px;padding:2rem;text-align:center}
+    .diagnostic-summary{margin-bottom:1rem}
+
+    /* Rule table fired row */
+    .row-fired td{background:#eff6ff!important}
+
+    /* Trace accordion */
+    .trace-block{border:1px solid #e2e8f0;border-radius:8px;margin-bottom:.75rem;overflow:hidden}
+    .trace-header{padding:1rem;background:#f8fafc;display:flex;align-items:center;gap:1rem;cursor:pointer}
+    .trace-header:hover{background:#f1f5f9}
+    .trace-step-id{width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0}
+    .trace-title{font-size:.9rem;font-weight:600}
+    .trace-body{padding:1.5rem;display:none}
+    .trace-body.is-open{display:block}
+    .ms-auto{margin-left:auto}
+
+    /* Metric variants */
+    .metric-value.lg{font-size:2.5rem}
+    .metric-value.secondary{color:#64748b}
+
+    /* Select */
+    .styled-select{padding:.5rem .75rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.875rem;margin-bottom:1rem;width:100%}
+
+    @media(max-width:768px){
+      .dashboard-grid-2,.dashboard-grid-4,.analytics-grid-2{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
 
-<header class="main-header">
-  <div class="header-container">
-    <div class="brand-area">
-      <div class="logo-circle">
-        <i class="fas fa-heartbeat"></i>
+<!-- FIX 2: Use class names that match main.css -->
+<header class="header">
+  <div class="header-inner">
+    <a class="brand" href="#">
+      <div class="brand-logo-container">
+        <i class="fas fa-heartbeat" style="font-size:1.1rem;"></i>
       </div>
       <div>
-        <h1 class="brand-title">Health<span class="text-primary">Wise</span></h1>
-        <p class="brand-status">Clinical Decision Support System</p>
+        <span class="brand-main">Health<span class="brand-highlight">Wise</span></span>
+        <span class="brand-tagline">Clinical Decision Support</span>
       </div>
-    </div>
+    </a>
 
-    <nav class="navigation-bar">
-      <button class="nav-btn active" onclick="showTab('diagnosis', this)">
+    <!-- FIX 3: .nav-tabs + .nav-item (matches main.css, not .navigation-bar/.nav-btn) -->
+    <nav class="nav-tabs">
+      <button class="nav-item active" onclick="showTab('diagnosis', this)">
         <i class="fas fa-stethoscope"></i> Diagnostics
       </button>
-      <button class="nav-btn" onclick="showTab('membership', this)">
+      <button class="nav-item" onclick="showTab('membership', this)">
         <i class="fas fa-chart-line"></i> Analytics
       </button>
-      <button class="nav-btn" onclick="showTab('surface3d', this)">
+      <button class="nav-item" onclick="showTab('surface3d', this)">
         <i class="fas fa-cube"></i> Risk Surface
       </button>
-      <button class="nav-btn" onclick="showTab('sensitivity', this)">
+      <button class="nav-item" onclick="showTab('sensitivity', this)">
         <i class="fas fa-chart-bar"></i> Sensitivity
       </button>
-      <button class="nav-btn" onclick="showTab('comparison', this)">
-        <i class="fas fa-chart-simple"></i> Comparison
+      <button class="nav-item" onclick="showTab('comparison', this)">
+        <i class="fas fa-table"></i> Comparison
       </button>
-      <button class="nav-btn" onclick="showTab('neuro', this)">
+      <button class="nav-item" onclick="showTab('neuro', this)">
         <i class="fas fa-microchip"></i> Optimization
       </button>
     </nav>
   </div>
 </header>
 
-<main class="content-wrapper">
-  
-<!-- TAB 1: DIAGNOSTICS -->
+<!-- FIX 4: .main-content matches main.css (not .content-wrapper) -->
+<main class="main-content">
+
+<!-- ═══ TAB 1: DIAGNOSTICS ═══ -->
 <div id="tab-diagnosis" class="tab-panel active">
   <div class="card">
     <div class="card-header">
       <i class="fas fa-stethoscope"></i>
       <h3>CHD Risk Assessment</h3>
     </div>
-    <p style="color: #64748b; margin-bottom: 1rem;">Comprehensive Coronary Heart Disease evaluation using multi-parametric inference.</p>
-    
-    <div class="clinical-alert">
-      <i class="fas fa-info-circle"></i>
+    <p style="color:#64748b;margin-bottom:1rem;">
+      Comprehensive Coronary Heart Disease evaluation using multi-parametric fuzzy inference.
+    </p>
+    <div class="clinical-alert info">
+      <i class="fas fa-info-circle" style="color:#2563eb;margin-top:2px;flex-shrink:0;"></i>
       <div>
-        <strong>System Methodology:</strong> This assessment utilizes 15 validated clinical rules, 
-        integrating physiological markers with demographic risk factors. 
-        Dual-method scoring (Centroid & Weighted Average) ensures cross-validation of results.
+        <strong>System Methodology:</strong> 15 validated clinical rules integrating physiological
+        markers with demographic risk factors. Dual-method scoring (Centroid &amp; Weighted Average)
+        cross-validates results.
       </div>
     </div>
   </div>
 
   <div class="dashboard-grid">
-    <!-- Input Sidebar -->
+    <!-- Sidebar: Inputs -->
     <div>
-      <!-- Clinical Case Studies -->
       <div class="card">
-        <div class="card-header">
-          <i class="fas fa-users"></i>
-          <h3>Clinical Case Studies</h3>
-        </div>
+        <div class="card-header"><i class="fas fa-users"></i><h3>Clinical Case Studies</h3></div>
         <button class="case-btn" onclick="loadPreset(1)">
-          <span class="case-id">Case 1 - Low Risk</span>
-          <span class="case-summary">BP:105 | Chol:160 | HR:55</span>
+          <span class="case-id">Case 1 — Low Risk</span>
+          <span class="case-summary">BP: 105 · Chol: 160 · HR: 55 · Age: 28</span>
         </button>
         <button class="case-btn" onclick="loadPreset(2)">
-          <span class="case-id">Case 2 - Moderate Risk</span>
-          <span class="case-summary">BP:120 | Chol:195 | HR:65</span>
+          <span class="case-id">Case 2 — Moderate Risk</span>
+          <span class="case-summary">BP: 120 · Chol: 195 · HR: 65 · Age: 45</span>
         </button>
         <button class="case-btn" onclick="loadPreset(3)">
-          <span class="case-id">Case 3 - High Risk</span>
-          <span class="case-summary">BP:165 | Chol:186 | HR:95</span>
+          <span class="case-id">Case 3 — High Risk</span>
+          <span class="case-summary">BP: 165 · Chol: 186 · HR: 95 · Age: 62</span>
         </button>
       </div>
 
-      <!-- Physiological Markers -->
       <div class="card">
-        <div class="card-header">
-          <i class="fas fa-heart"></i>
-          <h3>Physiological Markers</h3>
-        </div>
-        
+        <div class="card-header"><i class="fas fa-heart"></i><h3>Physiological Markers</h3></div>
         <div class="control-group">
           <label class="control-label">Blood Pressure <span class="badge" id="bp-val">130 mmHg</span></label>
-          <input class="modern-slider" type="range" id="bp" min="80" max="220" value="130" step="1" oninput="updateBadge('bp', this.value)">
+          <input class="modern-slider" type="range" id="bp" min="80" max="220" value="130" step="1">
           <div class="range-labels"><span>80</span><span>Normal: 120</span><span>220</span></div>
         </div>
-
         <div class="control-group">
           <label class="control-label">Total Cholesterol <span class="badge" id="chol-val">190 mg/dL</span></label>
-          <input class="modern-slider" type="range" id="chol" min="80" max="300" value="190" step="1" oninput="updateBadge('chol', this.value)">
+          <input class="modern-slider" type="range" id="chol" min="80" max="300" value="190" step="1">
           <div class="range-labels"><span>80</span><span>Normal: &lt;200</span><span>300</span></div>
         </div>
-
         <div class="control-group">
           <label class="control-label">Heart Rate <span class="badge" id="hr-val">75 bpm</span></label>
-          <input class="modern-slider" type="range" id="hr" min="30" max="220" value="75" step="1" oninput="updateBadge('hr', this.value)">
-          <div class="range-labels"><span>30</span><span>Normal: 60-100</span><span>220</span></div>
+          <input class="modern-slider" type="range" id="hr" min="30" max="220" value="75" step="1">
+          <div class="range-labels"><span>30</span><span>Normal: 60–100</span><span>220</span></div>
         </div>
       </div>
 
-      <!-- Demographics -->
       <div class="card">
-        <div class="card-header">
-          <i class="fas fa-user-md"></i>
-          <h3>Patient Demographics</h3>
-        </div>
-        
+        <div class="card-header"><i class="fas fa-user-md"></i><h3>Patient Demographics</h3></div>
         <div class="control-group">
           <label class="control-label">Patient Age <span class="badge" id="age-val">45 yrs</span></label>
-          <input class="modern-slider" type="range" id="age" min="0" max="100" value="45" step="1" oninput="updateBadge('age', this.value)">
+          <input class="modern-slider" type="range" id="age" min="0" max="100" value="45" step="1">
+          <div class="range-labels"><span>0</span><span>45</span><span>100</span></div>
         </div>
-
         <div class="control-group">
           <label class="control-label">Smoking Habits <span class="badge" id="smoking-val">0.5 pkts</span></label>
-          <input class="modern-slider" type="range" id="smoking" min="0" max="4" step="0.1" value="0.5" oninput="updateBadge('smoking', this.value)">
+          <input class="modern-slider" type="range" id="smoking" min="0" max="4" step="0.1" value="0.5">
+          <div class="range-labels"><span>0</span><span>2</span><span>4</span></div>
         </div>
-
+        <!-- FIX 5: id="diabetes" — this is what app.js reads (getElementById("diabetes")) -->
         <div class="control-group">
-          <label class="control-label">Fasting Glucose <span class="badge" id="glucose-val">110 mg/dL</span></label>
-          <input class="modern-slider" type="range" id="glucose" min="55" max="360" value="110" step="1" oninput="updateBadge('glucose', this.value)">
+          <label class="control-label">Fasting Glucose <span class="badge" id="diabetes-val">110 mg/dL</span></label>
+          <input class="modern-slider" type="range" id="diabetes" min="55" max="360" value="110" step="1">
+          <div class="range-labels"><span>55</span><span>Normal: &lt;100</span><span>360</span></div>
         </div>
       </div>
 
-      <!-- Intensity Modifiers -->
       <div class="card">
-        <div class="card-header">
-          <i class="fas fa-sliders-h"></i>
-          <h3>Intensity Modifier</h3>
-        </div>
+        <div class="card-header"><i class="fas fa-sliders-h"></i><h3>Intensity Modifier</h3></div>
         <div class="modifier-grid">
           <label class="modifier-tile"><input type="radio" name="hedge" value="none" checked><div class="tile-content"><span class="tile-label">Standard</span></div></label>
           <label class="modifier-tile"><input type="radio" name="hedge" value="very"><div class="tile-content"><span class="tile-label">Very</span></div></label>
@@ -636,348 +257,158 @@
         </div>
       </div>
 
-      <button class="primary-action-btn" onclick="executeClinicalAnalysis()">
+      <!-- FIX 6: id="run-btn" — app.js disables this during analysis -->
+      <button class="primary-action-btn" id="run-btn" onclick="executeClinicalAnalysis()">
         <i class="fas fa-play-circle"></i> Execute Analysis
       </button>
     </div>
 
-    <!-- Results Area -->
+    <!-- Results area -->
     <div id="result-area">
       <div class="empty-state-card">
         <div class="pulse-icon-container">
-          <i class="fas fa-heartbeat"></i>
+          <i class="fas fa-heartbeat" style="font-size:2rem;"></i>
         </div>
-        <h3>System Ready</h3>
+        <h3 style="color:#1e293b;margin-bottom:.5rem;">System Ready</h3>
         <p>Awaiting clinical input to generate patient risk profile.</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- TAB 2: MEMBERSHIP (Simplified) -->
+
+<!-- ═══ TAB 2: MEMBERSHIP ANALYTICS ═══ -->
 <div id="tab-membership" class="tab-panel">
   <div class="card">
-    <div class="card-header">
-      <i class="fas fa-chart-line"></i>
-      <h3>Membership Distribution</h3>
+    <div class="card-header"><i class="fas fa-chart-line"></i><h3>Membership Distribution Charts</h3></div>
+    <p style="color:#64748b;margin-bottom:1rem;">Fuzzy membership functions with linguistic intensity modifiers.</p>
+    <div class="modifier-pill-container">
+      <button class="pill-btn active" data-hedge="none"      onclick="applyMFHedge('none')">Standard</button>
+      <button class="pill-btn"        data-hedge="very"      onclick="applyMFHedge('very')">Very</button>
+      <button class="pill-btn"        data-hedge="extremely" onclick="applyMFHedge('extremely')">Extremely</button>
+      <button class="pill-btn"        data-hedge="somewhat"  onclick="applyMFHedge('somewhat')">Somewhat</button>
+      <button class="pill-btn"        data-hedge="slightly"  onclick="applyMFHedge('slightly')">Slightly</button>
     </div>
-    <p>Visualizing clinical parameter mapping and linguistic intensity shifts.</p>
   </div>
   <div class="analytics-grid">
-    <div class="card"><div class="card-header"><i class="fas fa-tachometer-alt"></i><h3>Blood Pressure</h3></div><div id="mf-bp" class="chart-container">Loading...</div></div>
-    <div class="card"><div class="card-header"><i class="fas fa-flask"></i><h3>Cholesterol</h3></div><div id="mf-chol" class="chart-container">Loading...</div></div>
-    <div class="card"><div class="card-header"><i class="fas fa-heart"></i><h3>Heart Rate</h3></div><div id="mf-hr" class="chart-container">Loading...</div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-tachometer-alt"></i><h3>Blood Pressure</h3></div><div id="mf-bp" class="chart-container"><p class="loading-state">Loading…</p></div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-flask"></i><h3>Cholesterol</h3></div><div id="mf-chol" class="chart-container"><p class="loading-state">Loading…</p></div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-heart"></i><h3>Heart Rate</h3></div><div id="mf-hr" class="chart-container"><p class="loading-state">Loading…</p></div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-chart-area"></i><h3>CHD Output Scale</h3></div><div id="mf-output" class="chart-container"><p class="loading-state">Loading…</p></div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-user"></i><h3>Age Demographics</h3></div><div id="mf-age" class="chart-container"><p class="loading-state">Loading…</p></div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-smoking"></i><h3>Smoking Intensity</h3></div><div id="mf-smoking" class="chart-container"><p class="loading-state">Loading…</p></div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-vial"></i><h3>Fasting Glucose</h3></div><div id="mf-glucose" class="chart-container"><p class="loading-state">Loading…</p></div></div>
   </div>
 </div>
 
-<!-- TAB 3: 3D SURFACE -->
+
+<!-- ═══ TAB 3: 3D RISK SURFACE ═══ -->
 <div id="tab-surface3d" class="tab-panel">
   <div class="card">
-    <div class="card-header">
-      <i class="fas fa-cube"></i>
-      <h3>3D Risk Topology</h3>
+    <div class="card-header"><i class="fas fa-cube"></i><h3>3D Risk Topology</h3></div>
+    <p style="color:#64748b;margin-bottom:1.25rem;">CHD Severity = ƒ(Blood Pressure, Total Cholesterol)</p>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center;">
+      <div class="control-group" style="min-width:220px;margin-bottom:0;">
+        <label class="control-label">Fixed Heart Rate <span class="badge" id="surf-hr-val">75 bpm</span></label>
+        <input class="modern-slider" type="range" id="surf-hr" min="30" max="200" value="75" step="5"
+               oninput="document.getElementById('surf-hr-val').textContent=this.value+' bpm'">
+      </div>
+      <div>
+        <p style="font-size:.8rem;font-weight:600;color:#64748b;margin-bottom:.5rem;">Modifier</p>
+        <div class="modifier-pill-container" style="margin:0;">
+          <button class="tab-pill-btn active" data-hedge="none"      onclick="setSurfHedge('none',this)">Standard</button>
+          <button class="tab-pill-btn"        data-hedge="very"      onclick="setSurfHedge('very',this)">Very</button>
+          <button class="tab-pill-btn"        data-hedge="extremely" onclick="setSurfHedge('extremely',this)">Extremely</button>
+          <button class="tab-pill-btn"        data-hedge="somewhat"  onclick="setSurfHedge('somewhat',this)">Somewhat</button>
+        </div>
+      </div>
+      <button class="primary-action-btn" style="width:auto;padding:.6rem 1.5rem;" onclick="renderRiskSurface()">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
     </div>
-    <p>Interaction mapping: CHD Severity = ƒ(Blood Pressure, Total Cholesterol).</p>
   </div>
   <div class="card">
-    <div id="surface-plot" class="main-plot-area">Loading 3D visualization...</div>
+    <div id="surface-plot" class="main-plot-area"><p class="loading-state">Loading 3D visualization…</p></div>
   </div>
 </div>
 
-<!-- TAB 4: SENSITIVITY -->
+
+<!-- ═══ TAB 4: SENSITIVITY ═══ -->
 <div id="tab-sensitivity" class="tab-panel">
   <div class="card">
-    <div class="card-header">
-      <i class="fas fa-chart-bar"></i>
-      <h3>Parameter Sensitivity Analysis</h3>
+    <div class="card-header"><i class="fas fa-chart-bar"></i><h3>Parameter Sensitivity Analysis</h3></div>
+    <p style="color:#64748b;margin-bottom:1rem;">Marginal influence of clinical factors on the risk score.</p>
+    <div class="modifier-pill-container">
+      <button class="pill-btn sens-hedge-btn active" onclick="setSensHedge('none',this)">Standard</button>
+      <button class="pill-btn sens-hedge-btn"        onclick="setSensHedge('very',this)">Very</button>
+      <button class="pill-btn sens-hedge-btn"        onclick="setSensHedge('extremely',this)">Extremely</button>
+      <button class="pill-btn sens-hedge-btn"        onclick="setSensHedge('somewhat',this)">Somewhat</button>
     </div>
-    <p>Identifying primary risk drivers by evaluating the marginal influence of clinical factors.</p>
   </div>
   <div id="sensitivity-info"></div>
   <div class="analytics-grid">
-    <div class="card"><div class="card-header"><i class="fas fa-chart-line"></i><h3>Impact Curves</h3></div><div id="sensitivity-chart" class="chart-container-sm">Loading...</div></div>
-    <div class="card"><div class="card-header"><i class="fas fa-chart-simple"></i><h3>Influence Hierarchy</h3></div><div id="sensitivity-bar" class="chart-container-sm">Loading...</div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-chart-line"></i><h3>Impact Curves</h3></div><div id="sensitivity-chart" class="chart-container-sm"><p class="loading-state">Loading…</p></div></div>
+    <div class="card"><div class="card-header"><i class="fas fa-sort-amount-down"></i><h3>Influence Hierarchy</h3></div><div id="sensitivity-bar" class="chart-container-sm"><p class="loading-state">Loading…</p></div></div>
   </div>
 </div>
 
-<!-- TAB 5: COMPARISON -->
+
+<!-- ═══ TAB 5: COMPARISON ═══ -->
 <div id="tab-comparison" class="tab-panel">
   <div class="card">
-    <div class="card-header">
-      <i class="fas fa-chart-simple"></i>
-      <h3>Methodological Comparison</h3>
-    </div>
-    <p>Cross-validating Centroid (CoG) vs. Weighted Average results across patient profiles.</p>
+    <div class="card-header"><i class="fas fa-table"></i><h3>Methodological Comparison</h3></div>
+    <p style="color:#64748b;">Cross-validating CoG vs. Weighted Average across patient profiles and hedge modifiers.</p>
   </div>
-  <div id="comparison-area">Loading comparison data...</div>
+  <div id="comparison-area"><p class="loading-state">Loading comparison data…</p></div>
 </div>
 
-<!-- TAB 6: OPTIMIZATION -->
+
+<!-- ═══ TAB 6: OPTIMIZATION ═══ -->
 <div id="tab-neuro" class="tab-panel">
   <div class="card">
-    <div class="card-header">
-      <i class="fas fa-microchip"></i>
-      <h3>Engine Optimization & Calibration</h3>
-    </div>
-    <div class="clinical-alert">
-      <i class="fas fa-shield-alt"></i>
-      <div><strong>Optimization Profile:</strong> Multi-layer parametric regressor (MLP) trained on synthetic clinical distributions.</div>
+    <div class="card-header"><i class="fas fa-microchip"></i><h3>Engine Optimization &amp; Calibration</h3></div>
+    <div class="clinical-alert info">
+      <i class="fas fa-shield-alt" style="color:#2563eb;margin-top:2px;flex-shrink:0;"></i>
+      <div><strong>Optimization Profile:</strong> Multi-layer parametric regressor trained on synthetic clinical distributions.</div>
     </div>
   </div>
   <div class="card">
     <div class="card-header"><i class="fas fa-sliders-h"></i><h3>System Calibration</h3></div>
-    <select id="train-n" style="padding: 0.5rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem;">
-      <option value="200">Rapid Sweep (200)</option>
-      <option value="400" selected>Balanced Calibration (400)</option>
-      <option value="600">High Precision (600)</option>
+    <label class="control-label" style="margin-bottom:.5rem;">Training Sample Size</label>
+    <!-- FIX 7: id="train-n" kept; id="train-btn" added so app.js can disable it -->
+    <select id="train-n" class="styled-select">
+      <option value="200">Rapid Sweep (200 samples)</option>
+      <option value="400" selected>Balanced Calibration (400 samples)</option>
+      <option value="600">High Precision (600 samples)</option>
+      <option value="1000">Maximum Fidelity (1000 samples)</option>
     </select>
-    <button class="primary-action-btn" onclick="trainNeuro()"><i class="fas fa-sync-alt"></i> Run Calibration</button>
+    <button class="primary-action-btn" id="train-btn" onclick="trainNeuro()">
+      <i class="fas fa-bolt"></i> Run Calibration
+    </button>
   </div>
-  <div id="neuro-area">Click "Run Calibration" to start optimization.</div>
+  <div id="neuro-area">
+    <div class="empty-state-card">
+      <div class="pulse-icon-container"><i class="fas fa-microchip" style="font-size:2rem;"></i></div>
+      <h3 style="color:#1e293b;margin-bottom:.5rem;">Awaiting Calibration</h3>
+      <p>Click "Run Calibration" to train the optimization module.</p>
+    </div>
+  </div>
 </div>
 
 </main>
 
 <footer class="main-footer">
-  <p>HealthWise Clinical Suite | Hybrid Knowledge-Based System | © 2026 Professional Decision Support</p>
+  <div class="footer-content">
+    <span class="footer-brand">HealthWise Clinical Suite</span>
+    <span class="footer-divider"></span>
+    <span>Hybrid Knowledge-Based System</span>
+    <span class="footer-divider"></span>
+    <span>© 2026 Professional Decision Support</span>
+  </div>
 </footer>
 
-<script>
-// ============================================
-// COMPLETE WORKING JAVASCRIPT
-// ============================================
+<!-- FIX 8: Load app.js via Flask url_for — replaces all inline JavaScript -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
-// Tab Navigation
-function showTab(tabName, btnElement) {
-    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    
-    const activePanel = document.getElementById(`tab-${tabName}`);
-    if (activePanel) activePanel.classList.add('active');
-    if (btnElement) btnElement.classList.add('active');
-    
-    // Load tab content
-    if (tabName === 'membership') loadMembershipCharts();
-    if (tabName === 'surface3d') load3DSurface();
-    if (tabName === 'sensitivity') loadSensitivityAnalysis();
-    if (tabName === 'comparison') loadComparisonData();
-}
-
-// Update badge values
-function updateBadge(id, value) {
-    const badge = document.getElementById(`${id}-val`);
-    if (!badge) return;
-    
-    let unit = '';
-    if (id === 'bp') unit = ' mmHg';
-    if (id === 'chol') unit = ' mg/dL';
-    if (id === 'hr') unit = ' bpm';
-    if (id === 'age') unit = ' yrs';
-    if (id === 'smoking') unit = ' pkts';
-    if (id === 'glucose') unit = ' mg/dL';
-    
-    badge.textContent = value + unit;
-}
-
-// Load preset cases
-function loadPreset(caseId) {
-    const presets = {
-        1: { bp: 105, chol: 160, hr: 55, age: 28, smoking: 0, glucose: 85 },
-        2: { bp: 120, chol: 195, hr: 65, age: 45, smoking: 0.5, glucose: 95 },
-        3: { bp: 165, chol: 186, hr: 95, age: 62, smoking: 0.9, glucose: 135 }
-    };
-    
-    const data = presets[caseId];
-    if (!data) return;
-    
-    for (let key in data) {
-        const slider = document.getElementById(key);
-        if (slider) {
-            slider.value = data[key];
-            updateBadge(key, data[key]);
-        }
-    }
-    
-    setTimeout(() => executeClinicalAnalysis(), 100);
-}
-
-// Execute Diagnosis
-async function executeClinicalAnalysis() {
-    const resultArea = document.getElementById('result-area');
-    if (!resultArea) return;
-    
-    resultArea.innerHTML = `
-        <div class="empty-state-card">
-            <div class="pulse-icon-container"><i class="fas fa-spinner fa-spin"></i></div>
-            <h3>Analyzing Clinical Data...</h3>
-            <p>Please wait while the fuzzy logic engine processes your inputs.</p>
-        </div>
-    `;
-    
-    const payload = {
-        bp: parseFloat(document.getElementById('bp')?.value || 130),
-        chol: parseFloat(document.getElementById('chol')?.value || 190),
-        hr: parseFloat(document.getElementById('hr')?.value || 75),
-        age: parseFloat(document.getElementById('age')?.value || 45),
-        smoking: parseFloat(document.getElementById('smoking')?.value || 0.5),
-        glucose: parseFloat(document.getElementById('glucose')?.value || 110),
-        hedge: document.querySelector('input[name="hedge"]:checked')?.value || 'none'
-    };
-    
-    try {
-        const response = await fetch('/api/diagnose', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await response.json();
-        displayResults(data);
-        
-    } catch (error) {
-        resultArea.innerHTML = `
-            <div class="empty-state-card" style="border-color: #ef4444;">
-                <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 48px;"></i>
-                <h3>Connection Error</h3>
-                <p>Make sure the Flask server is running.</p>
-                <button onclick="executeClinicalAnalysis()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 8px;">Retry</button>
-            </div>
-        `;
-    }
-}
-
-// Display Results
-function displayResults(data) {
-    const resultArea = document.getElementById('result-area');
-    if (!resultArea) return;
-    
-    const primary = data.primary_assessment;
-    const secondary = data.secondary_assessment;
-    const riskColor = primary.score < 1.5 ? '#10b981' : (primary.score < 2.55 ? '#f59e0b' : '#ef4444');
-    
-    resultArea.innerHTML = `
-        <div style="animation: fadeIn 0.5s ease-out;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; text-align: center; border-top: 4px solid ${riskColor};">
-                    <h4 style="color: #64748b; margin-bottom: 0.5rem;">Risk Score (Centroid)</h4>
-                    <h2 style="font-size: 2.5rem; color: ${riskColor};">${primary.score}</h2>
-                    <div style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; background: ${riskColor}20; color: ${riskColor};">${primary.classification.label}</div>
-                </div>
-                <div style="background: white; padding: 1.5rem; border-radius: 12px; text-align: center; border-top: 4px solid #64748b;">
-                    <h4 style="color: #64748b;">Weighted Average</h4>
-                    <h2 style="font-size: 2.5rem;">${secondary.score}</h2>
-                    <div style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; background: #94a3b820;">${secondary.classification.label}</div>
-                </div>
-            </div>
-            
-            <div style="background: white; padding: 1rem; border-radius: 12px;">
-                <div style="height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
-                    <div style="width: ${(primary.score / 4 * 100)}%; height: 100%; background: ${riskColor};"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem;">
-                    <span>Optimal (0.0)</span>
-                    <span style="font-weight: bold;">Score: ${primary.score}</span>
-                    <span>Critical (4.0)</span>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Load Membership Charts
-async function loadMembershipCharts() {
-    if (!window.Plotly) return;
-    
-    const params = ['bp', 'chol', 'hr'];
-    for (let param of params) {
-        try {
-            const response = await fetch(`/api/membership/${param}?hedge=none`);
-            const data = await response.json();
-            const traces = Object.keys(data).filter(k => k !== 'x_axis').map(key => ({
-                x: data.x_axis,
-                y: data[key],
-                name: key,
-                type: 'scatter',
-                mode: 'lines',
-                line: { width: 2 }
-            }));
-            Plotly.newPlot(`mf-${param}`, traces, { height: 300, margin: { t: 30 } });
-        } catch(e) {
-            document.getElementById(`mf-${param}`).innerHTML = 'Chart unavailable';
-        }
-    }
-}
-
-// Load 3D Surface
-async function load3DSurface() {
-    if (!window.Plotly) return;
-    try {
-        const response = await fetch('/api/surface3d?hr=75&hedge=none');
-        const data = await response.json();
-        const trace = {
-            type: 'surface',
-            x: data.chol_axis,
-            y: data.bp_axis,
-            z: data.z_matrix,
-            colorscale: [[0, '#10b981'], [0.5, '#f59e0b'], [1, '#ef4444']]
-        };
-        Plotly.newPlot('surface-plot', [trace], { height: 550, margin: { t: 30 } });
-    } catch(e) {
-        document.getElementById('surface-plot').innerHTML = '3D visualization unavailable';
-    }
-}
-
-// Load Sensitivity Analysis
-async function loadSensitivityAnalysis() {
-    if (!window.Plotly) return;
-    try {
-        const response = await fetch('/api/sensitivity', { method: 'POST', body: JSON.stringify({}), headers: { 'Content-Type': 'application/json' } });
-        const data = await response.json();
-        if (data.analysis_grid) {
-            const traces = Object.entries(data.analysis_grid).slice(0, 4).map(([key, val]) => ({
-                x: val.coordinates,
-                y: val.centroid_path,
-                name: val.display_label || key,
-                type: 'scatter',
-                mode: 'lines'
-            }));
-            Plotly.newPlot('sensitivity-chart', traces, { height: 350 });
-        }
-    } catch(e) {}
-}
-
-// Load Comparison Data
-async function loadComparisonData() {
-    const area = document.getElementById('comparison-area');
-    if (area) area.innerHTML = '<div class="card">Comparison data will appear here after calibration.</div>';
-}
-
-// Train Neuro-Fuzzy
-async function trainNeuro() {
-    const area = document.getElementById('neuro-area');
-    const n = document.getElementById('train-n')?.value || 400;
-    if (area) area.innerHTML = '<div class="card"><i class="fas fa-spinner fa-spin"></i> Calibrating...</div>';
-    
-    try {
-        const response = await fetch(`/api/logic-calibrate?n=${n}`, { method: 'POST' });
-        const data = await response.json();
-        area.innerHTML = `
-            <div class="card">
-                <h4>Calibration Complete</h4>
-                <p>R² Score: ${data.r2_coefficient || 'N/A'}</p>
-                <p>MSE: ${data.mean_squared_error || 'N/A'}</p>
-                <p>MAE: ${data.mean_abs_error || 'N/A'}</p>
-            </div>
-        `;
-    } catch(e) {
-        area.innerHTML = '<div class="card">Calibration failed. Please try again.</div>';
-    }
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('HealthWise System Ready');
-});
-</script>
 </body>
 </html>
